@@ -185,13 +185,5 @@ namespace DeNote.Views
                 viewModel.ChangeToShapeCommand.Execute(ShapeDrawingType.Ellipse);
             }
         }
-
-        private void ClearDrawingBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (viewModel != null)
-            {
-                viewModel.ClearDrawingCommand.Execute(null);
-            }
-        }
     }
 }

@@ -49,10 +49,13 @@ namespace DeNote.Models
             switch (penType)
             {
                 case PenType.Highlighter:
+                    base.Stroke = Brushes.Yellow;
                     base.Opacity = 0.5;
-
-                    base.StrokeThickness = 4;
-                    base.MinStrokeThickness = 3;
+                    base.StrokeThickness = 10;
+                    base.MinStrokeThickness = 5;
+                    break;
+                default:
+                    base.Stroke = Brushes.Red;
                     break;
             }
         }

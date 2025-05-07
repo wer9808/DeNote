@@ -11,11 +11,15 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeNote.Models;
+using DeNote.Services;
 
 namespace DeNote.ViewModels
 {
+
     public partial class DrawingViewModel : ObservableObject
     {
+
+        private readonly DrawingCommandManager _commandManager = new DrawingCommandManager();
 
         [ObservableProperty]
         private ObservableCollection<DrawingObject> _drawingObjects = new ObservableCollection<DrawingObject>();
@@ -39,20 +43,6 @@ namespace DeNote.ViewModels
         private bool _isDrawing = false;
 
         [ObservableProperty]
-        private Brush _currentStrokeColor = Brushes.Red;
-
-        [ObservableProperty]
-        private double _currentStrokeThickness = 1.0;
-
-        [ObservableProperty]
-        private Brush _currentFillColor = Brushes.Transparent;
-
-        [ObservableProperty]
-        private bool _isFilled = false;
-        [ObservableProperty]
-        private bool _isStroked = false;
-
-        [ObservableProperty]
         private PenStrokeDrawingAttribute _normalPenAttribute = new PenStrokeDrawingAttribute(PenType.Normal);
 
         [ObservableProperty]
@@ -63,6 +53,11 @@ namespace DeNote.ViewModels
 
         private Point _startPoint;
         private Point _endPoint;
+
+        public DrawingViewModel()
+        {
+            
+        }
 
         [RelayCommand]
         private void StartDrawing(StylusPoint startPoint)
@@ -89,7 +84,8 @@ namespace DeNote.ViewModels
                     break;
                 case DrawingObjectType.Shape:
                     _startPoint = startPoint.ToPoint();
-                    switch (CurrentShapeDrawingType)
+                    ShapeDrawingAttribute.ShapeType = CurrentShapeDrawingType;
+                    switch (ShapeDrawingAttribute.ShapeType)
                     {
                         case ShapeDrawingType.Rectangle:
                             CurrentDrawingObject = new RectangleShape(ShapeDrawingAttribute.Clone());
@@ -155,55 +151,56 @@ namespace DeNote.ViewModels
             IsDrawing = false;
             if (CurrentDrawingObject == null)
                 return;
-            DrawingObjects.Add(CurrentDrawingObject);
+            var command = new AddDrawingObjectCommand(DrawingObjects, CurrentDrawingObject);
+            ExecuteCommand(command);
             CurrentDrawingObject = null;
 
             DrawingUpdated = true;
         }
 
         [RelayCommand]
-        private void ClearDrawing() 
-        { 
-            DrawingObjects.Clear();
+        private void ClearDrawing()
+        {
+            var command = new ClearDrawingObjectsCommand(DrawingObjects);
+            ExecuteCommand(command);
 
             DrawingUpdated = true;
         }
 
-        private void SavePrevDrawingObjectTypeSetting()
+        private IRelayCommand _undoCommand;
+        public IRelayCommand UndoCommand => _undoCommand ??= new RelayCommand(
+            () => {
+                _commandManager.Undo();
+                NotifyCanExecuteChanged();
+                DrawingUpdated = true;
+            },
+            () => _commandManager.CanUndo);
+
+        private IRelayCommand _redoCommand;
+        public IRelayCommand RedoCommand => _redoCommand ??= new RelayCommand(
+            () => {
+                _commandManager.Redo();
+                NotifyCanExecuteChanged();
+                DrawingUpdated = true;
+            },
+            () => _commandManager.CanRedo);
+
+        private void ExecuteCommand(MemCommand command)
         {
+            _commandManager.ExecuteCommand(command);
+            NotifyCanExecuteChanged();
+        }
 
-            switch (CurrentDrawingObjectType)
-            {
-                case DrawingObjectType.Pen:
-                    if (CurrentPenType == PenType.Normal)
-                    {
-                        NormalPenAttribute.Stroke = CurrentStrokeColor;
-                        NormalPenAttribute.StrokeThickness = CurrentStrokeThickness;
-                    }
-                    else
-                    {
-                        HighlighterAttribute.Stroke = CurrentStrokeColor;
-                        HighlighterAttribute.StrokeThickness = CurrentStrokeThickness;
-                    }
-                    break;
-                case DrawingObjectType.Shape:
-                    ShapeDrawingAttribute.Stroke = CurrentStrokeColor;
-                    ShapeDrawingAttribute.StrokeThickness = CurrentStrokeThickness;
-                    ShapeDrawingAttribute.IsFilled = IsFilled;
-                    ShapeDrawingAttribute.IsStroked = IsStroked;
-                    break;
-                default:
-                    break;
-            }
-
+        private void NotifyCanExecuteChanged()
+        {
+            UndoCommand.NotifyCanExecuteChanged();
+            RedoCommand.NotifyCanExecuteChanged();
         }
 
         [RelayCommand]
         private void ChangeToPen(PenType penType)
         {
             if (IsDrawing) return;
-
-            SavePrevDrawingObjectTypeSetting();
 
             CurrentDrawingObjectType = DrawingObjectType.Pen;
             CurrentPenType = penType;
@@ -213,8 +210,6 @@ namespace DeNote.ViewModels
         private void ChangeToShape(ShapeDrawingType shapeDrawingType)
         {
             if (IsDrawing) return;
-
-            SavePrevDrawingObjectTypeSetting();
 
             CurrentDrawingObjectType = DrawingObjectType.Shape;
             CurrentShapeDrawingType = shapeDrawingType;

@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using DeNote.ViewModels;
 
 namespace DeNote.Views
 {
@@ -20,9 +21,14 @@ namespace DeNote.Views
     /// </summary>
     public partial class PenConfigControl : UserControl
     {
-        public PenConfigControl()
+
+        const double MaxStrokeThickness = 20;
+        const double MinStrokeThickness = 0.5;
+
+        public PenConfigControl(DrawingViewModel drawingViewModel)
         {
             InitializeComponent();
+            this.DataContext = drawingViewModel;
         }
     }
 }
