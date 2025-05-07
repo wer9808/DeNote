@@ -21,6 +21,9 @@ namespace DeNote.ViewModels
         private ObservableCollection<DrawingObject> _drawingObjects = new ObservableCollection<DrawingObject>();
 
         [ObservableProperty]
+        private bool _drawingUpdated = false;
+
+        [ObservableProperty]
         private DrawingObject? _currentDrawingObject = null;
 
         [ObservableProperty]
@@ -36,16 +39,27 @@ namespace DeNote.ViewModels
         private bool _isDrawing = false;
 
         [ObservableProperty]
-        private Brush _strokeColor = Brushes.Red;
+        private Brush _currentStrokeColor = Brushes.Red;
 
         [ObservableProperty]
-        private double _strokeThickness = 1.0;
+        private double _currentStrokeThickness = 1.0;
 
         [ObservableProperty]
-        private Brush _fillColor = Brushes.Transparent;
+        private Brush _currentFillColor = Brushes.Transparent;
 
         [ObservableProperty]
-        private bool _isFillEnabled = false;
+        private bool _isFilled = false;
+        [ObservableProperty]
+        private bool _isStroked = false;
+
+        [ObservableProperty]
+        private PenStrokeDrawingAttribute _normalPenAttribute = new PenStrokeDrawingAttribute(PenType.Normal);
+
+        [ObservableProperty]
+        private PenStrokeDrawingAttribute _highlighterAttribute = new PenStrokeDrawingAttribute(PenType.Highlighter);
+
+        [ObservableProperty]
+        private ShapeDrawingAttribute _shapeDrawingAttribute = new ShapeDrawingAttribute();
 
         private Point _startPoint;
         private Point _endPoint;
@@ -60,11 +74,16 @@ namespace DeNote.ViewModels
             switch (CurrentDrawingObjectType)
             {
                 case DrawingObjectType.Pen:
-                    var penStroke = new PenStroke(CurrentPenType)
+                    PenStroke penStroke;
+                    switch (CurrentPenType)
                     {
-                        Stroke = StrokeColor,
-                        StrokeThickness = StrokeThickness,
-                    };
+                        case PenType.Highlighter:
+                            penStroke = new PenStroke(HighlighterAttribute.Clone());
+                            break;
+                        default:
+                            penStroke = new PenStroke(NormalPenAttribute.Clone());
+                            break;
+                    }
                     penStroke.Points.Add(startPoint);
                     CurrentDrawingObject = penStroke;
                     break;
@@ -73,24 +92,16 @@ namespace DeNote.ViewModels
                     switch (CurrentShapeDrawingType)
                     {
                         case ShapeDrawingType.Rectangle:
-                            CurrentDrawingObject = new RectangleShape()
-                            {
-                                Stroke = StrokeColor,
-                                StrokeThickness = StrokeThickness,
-                                Fill = IsFillEnabled ? FillColor : Brushes.Transparent
-                            };
+                            CurrentDrawingObject = new RectangleShape(ShapeDrawingAttribute.Clone());
                             break;
                         case ShapeDrawingType.Ellipse:
-                            CurrentDrawingObject = new EllipseShape()
-                            {
-                                Stroke = StrokeColor,
-                                StrokeThickness = StrokeThickness,
-                                Fill = IsFillEnabled ? FillColor : Brushes.Transparent
-                            };
+                            CurrentDrawingObject = new EllipseShape(ShapeDrawingAttribute.Clone());
                             break;
                     }
                     break;
             }
+
+            DrawingUpdated = true;
         }
 
         [RelayCommand]
@@ -134,6 +145,8 @@ namespace DeNote.ViewModels
                     }
                     break;
             }
+
+            DrawingUpdated = true;
         }
 
         [RelayCommand]
@@ -145,6 +158,66 @@ namespace DeNote.ViewModels
             DrawingObjects.Add(CurrentDrawingObject);
             CurrentDrawingObject = null;
 
+            DrawingUpdated = true;
+        }
+
+        [RelayCommand]
+        private void ClearDrawing() 
+        { 
+            DrawingObjects.Clear();
+
+            DrawingUpdated = true;
+        }
+
+        private void SavePrevDrawingObjectTypeSetting()
+        {
+
+            switch (CurrentDrawingObjectType)
+            {
+                case DrawingObjectType.Pen:
+                    if (CurrentPenType == PenType.Normal)
+                    {
+                        NormalPenAttribute.Stroke = CurrentStrokeColor;
+                        NormalPenAttribute.StrokeThickness = CurrentStrokeThickness;
+                    }
+                    else
+                    {
+                        HighlighterAttribute.Stroke = CurrentStrokeColor;
+                        HighlighterAttribute.StrokeThickness = CurrentStrokeThickness;
+                    }
+                    break;
+                case DrawingObjectType.Shape:
+                    ShapeDrawingAttribute.Stroke = CurrentStrokeColor;
+                    ShapeDrawingAttribute.StrokeThickness = CurrentStrokeThickness;
+                    ShapeDrawingAttribute.IsFilled = IsFilled;
+                    ShapeDrawingAttribute.IsStroked = IsStroked;
+                    break;
+                default:
+                    break;
+            }
+
+        }
+
+        [RelayCommand]
+        private void ChangeToPen(PenType penType)
+        {
+            if (IsDrawing) return;
+
+            SavePrevDrawingObjectTypeSetting();
+
+            CurrentDrawingObjectType = DrawingObjectType.Pen;
+            CurrentPenType = penType;
+        }
+
+        [RelayCommand]
+        private void ChangeToShape(ShapeDrawingType shapeDrawingType)
+        {
+            if (IsDrawing) return;
+
+            SavePrevDrawingObjectTypeSetting();
+
+            CurrentDrawingObjectType = DrawingObjectType.Shape;
+            CurrentShapeDrawingType = shapeDrawingType;
         }
     }
 }

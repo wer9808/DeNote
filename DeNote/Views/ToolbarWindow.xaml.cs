@@ -14,6 +14,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using DeNote.Models;
 using DeNote.ViewModels;
 
 namespace DeNote.Views
@@ -33,7 +34,7 @@ namespace DeNote.Views
         private HwndSource _source;
 
         private OverlayWindow _overlayWindow;
-        private DrawingViewModel _viewModel { get => DataContext as DrawingViewModel; }
+        private DrawingViewModel viewModel { get => DataContext as DrawingViewModel; }
 
         public ToolbarWindow(DrawingViewModel drawingViewModel)
         {
@@ -159,6 +160,38 @@ namespace DeNote.Views
         private void NotifyIcon_Exit(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
+        }
+
+        private void PenConfigBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (viewModel != null)
+            {
+                viewModel.ChangeToPenCommand.Execute(PenType.Normal);
+            }
+        }
+
+        private void HighlightConfigBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (viewModel != null)
+            {
+                viewModel.ChangeToPenCommand.Execute(PenType.Highlighter);
+            }
+        }
+
+        private void ShapeConfigBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (viewModel != null)
+            {
+                viewModel.ChangeToShapeCommand.Execute(ShapeDrawingType.Ellipse);
+            }
+        }
+
+        private void ClearDrawingBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (viewModel != null)
+            {
+                viewModel.ClearDrawingCommand.Execute(null);
+            }
         }
     }
 }

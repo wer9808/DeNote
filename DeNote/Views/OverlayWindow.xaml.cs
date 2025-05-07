@@ -27,8 +27,6 @@ namespace DeNote.Views
     {
         private DrawingViewModel viewModel { get => DataContext as DrawingViewModel; }
 
-        private bool _needsUpdate = false;
-
         public OverlayWindow(DrawingViewModel viewModel)
         {
             InitializeComponent();
@@ -40,9 +38,9 @@ namespace DeNote.Views
         
         private void CompositionTarget_Rendering(object sender, EventArgs e)
         {
-            if (_needsUpdate)
+            if (viewModel != null && viewModel.DrawingUpdated)
             {
-                _needsUpdate = false;
+                viewModel.DrawingUpdated = false;
                 RedrawCanvas();
             }
         }
@@ -54,8 +52,6 @@ namespace DeNote.Views
             {
                 var startPoint = new StylusPoint(e.GetPosition(DrawingCanvas).X, e.GetPosition(DrawingCanvas).Y, 1.0f);
                 viewModel.StartDrawingCommand.Execute(startPoint);
-
-                _needsUpdate = true;
             }
         }
 
@@ -74,8 +70,6 @@ namespace DeNote.Views
                 {
                     viewModel.UpdateDrawingCommand.Execute(currentPoint);
                 }
-
-                _needsUpdate = true;
             }
         }
 
@@ -87,8 +81,6 @@ namespace DeNote.Views
             {
                 var endPoint = new StylusPoint(e.GetPosition(DrawingCanvas).X, e.GetPosition(DrawingCanvas).Y, 1.0f);
                 viewModel.EndDrawingCommand.Execute(endPoint);
-
-                _needsUpdate = true;
             }
         }
 
@@ -114,8 +106,6 @@ namespace DeNote.Views
                     var currentPoint = stylusPoints.Last();
                     viewModel.UpdateDrawingCommand.Execute(currentPoint);
                 }
-
-                _needsUpdate = true;
             }
 
         }
@@ -148,8 +138,6 @@ namespace DeNote.Views
                     var currentPoint = stylusPoints.Last();
                     viewModel.UpdateDrawingCommand.Execute(currentPoint);
                 }
-
-                _needsUpdate = true;
             }
         }
 
@@ -175,8 +163,6 @@ namespace DeNote.Views
                     var endPoint = stylusPoints.Last();
                     viewModel.EndDrawingCommand.Execute(endPoint);
                 }
-
-                _needsUpdate = true;
             }
         }
         private bool IsPointOutsideCanvas(StylusPoint point)

@@ -8,12 +8,18 @@
         xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
         mc:Ignorable="d"
         Closing="Window_Closing"
+        MaxWidth="200"
         Title="ToolbarWindow">
     <Grid>
-        <StackPanel>
-            <ui:Button Content="펜" HorizontalAlignment="Stretch" Margin="10"/>
-            <ui:Button Content="형광펜" HorizontalAlignment="Stretch" Margin="10"/>
-            <ui:Button Content="도형" HorizontalAlignment="Stretch" Margin="10"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <ui:Button x:Name="PenConfigBtn" Click="PenConfigBtn_Click" Content="펜" HorizontalAlignment="Stretch" Margin="10"/>
+            <ui:Button x:Name="HighlightConfigBtn" Click="HighlightConfigBtn_Click" Content="형광펜" HorizontalAlignment="Stretch" Margin="10"/>
+            <ui:Button x:Name="ShapeConfigBtn" Click="ShapeConfigBtn_Click" Content="도형" HorizontalAlignment="Stretch" Margin="10"/>
+            <ui:Button x:Name="ClearDrawingBtn" Click="ClearDrawingBtn_Click"  Content="초기화" HorizontalAlignment="Stretch" Margin="10"/>
         </StackPanel>
         <tray:NotifyIcon>
             <tray:NotifyIcon.Menu>

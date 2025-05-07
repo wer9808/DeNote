@@ -34,11 +34,13 @@ namespace DeNote.Models
         public Vector Scale { get; set; } = new Vector(1, 1); // Scale factor for the object (X and Y scale)
         public int ZIndex { get; set; } = 0; // Z-index for layering objects on the canvas
 
-        public Brush Stroke { get; set; } = Brushes.Black; // Stroke color for the object
-        public bool IsStroked { get; set; } = true; // Indicates if the object has a stroke
-        public double StrokeThickness { get; set; } = 1; // Thickness of the stroke
-        public Brush Fill { get; set; } = Brushes.Transparent; // Fill color for the object
-        public double Opacity { get; set; } = 1.0; // Opacity of the object (0 to 1)
+
+        public BaseDrawingAttribute DrawingAttribute { get; set; } = new BaseDrawingAttribute();
+        public Brush Stroke { get => DrawingAttribute.Stroke; set => DrawingAttribute.Stroke = value; } // Stroke color for the object
+        public double StrokeThickness { get => DrawingAttribute.StrokeThickness; set => DrawingAttribute.StrokeThickness = value; } // Thickness of the stroke
+        public Brush Fill { get => DrawingAttribute.Fill; set => DrawingAttribute.Fill = value; } // Fill color for the object
+        public double Opacity { get => DrawingAttribute.Opacity; set => DrawingAttribute.Opacity = value; } // Opacity of the object (0 to 1)
+
         public bool IsVisible { get; set; } = true; // Indicates if the object is visible
         public bool IsSelected { get; set; } = false; // Indicates if the object is selected
         public bool IsLocked { get; set; } = false; // Indicates if the object is locked (not editable)
@@ -217,58 +219,48 @@ namespace DeNote.Models
         }
     }
 
-    public enum PenType
-    {
-        Normal,
-        Highlighter,
-    }
-
     public class PenStroke : DrawingObject
     {
         public StylusPointCollection Points { get; set; } = new StylusPointCollection(); // List of points that make up the stroke
-        public double Smoothness { get; set; } = 0.2; // Smoothness of the stroke (if applicable)
-        public PenType PenType { get; set; } = PenType.Normal; // Type of pen (e.g., "Normal", "Highlighter", etc.)
+        public PenStrokeDrawingAttribute PenAttribute { get => base.DrawingAttribute as PenStrokeDrawingAttribute; }
+        public PenType PenType { get => PenAttribute.PenType; }
+        public double Smoothness { get => PenAttribute.Smoothness; }
 
         public PenStroke(PenType penType = PenType.Normal)
         {
-            this.PenType = penType;
-            switch (penType)
-            {
-                case PenType.Highlighter:
-                    base.Opacity = 0.5; // Set opacity to 0.5 for highlighter pen
-                    break;
-                default:
-                    base.Opacity = 1.0; // Set opacity to 1 for normal pen
-                    break;
-            }
+            base.Type = DrawingObjectType.Pen;
+            base.DrawingAttribute = new PenStrokeDrawingAttribute(penType);
+        }
+
+        public PenStroke(PenStrokeDrawingAttribute penStrokeDrawingAttribute)
+        {
+            base.Type = DrawingObjectType.Pen;
+            base.DrawingAttribute = penStrokeDrawingAttribute;
         }
 
     }
 
 
-    public enum ShapeDrawingType
-    {
-        Rectangle,
-        Ellipse,
-    }
-
     public abstract class ShapeDrawingObject : DrawingObject
     {
-        public ShapeDrawingType ShapeType { get; set; } // Type of shape (e.g., "Rectangle", "Circle", etc.)
-        public bool IsFilled { get; set; } = true; // Indicates if the shape is filled or not
-        public bool IsStroked { get; set; } = true; // Indicates if the shape has a stroke or not
+        public ShapeDrawingAttribute ShapeDrawingAttribute { get => base.DrawingAttribute as ShapeDrawingAttribute; }
+        public ShapeDrawingType ShapeType { get => ShapeDrawingAttribute.ShapeType; } // Type of shape (e.g., "Rectangle", "Circle", etc.)
+        public bool IsFilled { get => ShapeDrawingAttribute.IsFilled; set => ShapeDrawingAttribute.IsFilled = value; } // Indicates if the shape is filled or not
+        public bool IsStroked { get => ShapeDrawingAttribute.IsStroked; set => ShapeDrawingAttribute.IsStroked = value; } // Indicates if the shape has a stroke or not
 
         public abstract Geometry CreateGeometry(); // Method to create the geometry of the shape
     }
 
     public class RectangleShape : ShapeDrawingObject
     {
-        public RectangleShape()
+
+        public RectangleShape(ShapeDrawingAttribute? shapeDrawingAttribute = null)
         {
-            ShapeType = ShapeDrawingType.Rectangle;
+            base.Type = DrawingObjectType.Shape;
+            base.DrawingAttribute = shapeDrawingAttribute ?? new ShapeDrawingAttribute();
         }
 
-        public CornerRadius CornerRadius { get; set; } = new CornerRadius(0); // Corner radius for rounded corners
+        public CornerRadius CornerRadius { get => this.ShapeDrawingAttribute.CornerRadius; }
 
         public override Geometry CreateGeometry()
         {
@@ -282,9 +274,10 @@ namespace DeNote.Models
 
     public class EllipseShape : ShapeDrawingObject
     {
-        public EllipseShape()
+        public EllipseShape(ShapeDrawingAttribute? shapeDrawingAttribute = null)
         {
-            ShapeType = ShapeDrawingType.Ellipse;
+            base.Type = DrawingObjectType.Shape;
+            base.DrawingAttribute = shapeDrawingAttribute ?? new ShapeDrawingAttribute();
         }
 
         public double RadiusX
