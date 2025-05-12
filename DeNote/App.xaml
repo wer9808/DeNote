@@ -5,6 +5,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
              xmlns:vio="http://schemas.lepo.co/wpfui/2022/xaml/violeta"
+             xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
              Startup="Application_Startup">
     <Application.Resources>
         <ResourceDictionary>

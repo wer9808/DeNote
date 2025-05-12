@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Drawing.Imaging;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +15,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeNote.Models;
 using DeNote.Services;
+using SkiaSharp;
+using Point = System.Windows.Point;
+using Size = System.Windows.Size;
 
 namespace DeNote.ViewModels
 {
@@ -28,6 +34,9 @@ namespace DeNote.ViewModels
         private bool _drawingUpdated = false;
 
         [ObservableProperty]
+        private SKBitmap _canvasScreenshotBitmap;
+
+        [ObservableProperty]
         private DrawingObject? _currentDrawingObject = null;
 
         [ObservableProperty]
@@ -37,10 +46,16 @@ namespace DeNote.ViewModels
         private PenType _currentPenType = PenType.Normal;
 
         [ObservableProperty]
+        private StylusPointDescription _currentPointDescription;
+
+        [ObservableProperty]
         private ShapeDrawingType _currentShapeDrawingType = ShapeDrawingType.Rectangle;
 
         [ObservableProperty]
         private bool _isDrawing = false;
+
+        [ObservableProperty]
+        private bool _isAttributeChanging = false;
 
         [ObservableProperty]
         private PenStrokeDrawingAttribute _normalPenAttribute = new PenStrokeDrawingAttribute(PenType.Normal);
@@ -51,8 +66,11 @@ namespace DeNote.ViewModels
         [ObservableProperty]
         private ShapeDrawingAttribute _shapeDrawingAttribute = new ShapeDrawingAttribute();
 
-        private Point _startPoint;
-        private Point _endPoint;
+        [ObservableProperty]
+        private Visibility _toolBarVisibility = Visibility.Visible;
+
+        private QIPoint _startPoint;
+        private QIPoint _endPoint;
 
         public DrawingViewModel()
         {
@@ -62,9 +80,13 @@ namespace DeNote.ViewModels
         [RelayCommand]
         private void StartDrawing(StylusPoint startPoint)
         {
+            if (IsAttributeChanging) return;
             if (IsDrawing)
                 EndDrawing();
             IsDrawing = true;
+            ToolBarVisibility = Visibility.Collapsed;
+
+            var startQIPoint = new QIPoint(startPoint);
 
             switch (CurrentDrawingObjectType)
             {
@@ -79,19 +101,27 @@ namespace DeNote.ViewModels
                             penStroke = new PenStroke(NormalPenAttribute.Clone());
                             break;
                     }
-                    penStroke.Points.Add(startPoint);
+
+                    penStroke.Points.Add(startQIPoint);
                     CurrentDrawingObject = penStroke;
                     break;
                 case DrawingObjectType.Shape:
-                    _startPoint = startPoint.ToPoint();
+                    _startPoint = startQIPoint;
                     ShapeDrawingAttribute.ShapeType = CurrentShapeDrawingType;
                     switch (ShapeDrawingAttribute.ShapeType)
                     {
                         case ShapeDrawingType.Rectangle:
-                            CurrentDrawingObject = new RectangleShape(ShapeDrawingAttribute.Clone());
+                            var rectangle = new RectangleShape(ShapeDrawingAttribute.Clone());
+                            rectangle.Position = new Point(startQIPoint.X, startQIPoint.Y);
+                            rectangle.Size = new Size(0, 0);
+
+                            CurrentDrawingObject = rectangle;
                             break;
                         case ShapeDrawingType.Ellipse:
-                            CurrentDrawingObject = new EllipseShape(ShapeDrawingAttribute.Clone());
+                            var ellipse = new EllipseShape(ShapeDrawingAttribute.Clone());
+                            ellipse.Position = new Point(startQIPoint.X, startQIPoint.Y);
+                            ellipse.Size = new Size(0, 0);
+                            CurrentDrawingObject = ellipse;
                             break;
                     }
                     break;
@@ -105,11 +135,14 @@ namespace DeNote.ViewModels
         {
             if (!IsDrawing || CurrentDrawingObject == null)
                 return;
+
+            var currentQIPoint = new QIPoint(currentPoint);
+
             switch (CurrentDrawingObjectType)
             {
                 case DrawingObjectType.Pen:
                     var penStroke = CurrentDrawingObject as PenStroke;
-                    penStroke.Points.Add(currentPoint);
+                    penStroke.Points.Add(currentQIPoint);
                     break;
                 case DrawingObjectType.Shape:
                     switch (CurrentShapeDrawingType)
@@ -149,6 +182,7 @@ namespace DeNote.ViewModels
         private void EndDrawing(StylusPoint? endPoint = null)
         {
             IsDrawing = false;
+            ToolBarVisibility = Visibility.Visible;
             if (CurrentDrawingObject == null)
                 return;
             var command = new AddDrawingObjectCommand(DrawingObjects, CurrentDrawingObject);
@@ -200,6 +234,7 @@ namespace DeNote.ViewModels
         [RelayCommand]
         private void ChangeToPen(PenType penType)
         {
+            if (IsAttributeChanging) return;
             if (IsDrawing) return;
 
             CurrentDrawingObjectType = DrawingObjectType.Pen;
@@ -209,10 +244,38 @@ namespace DeNote.ViewModels
         [RelayCommand]
         private void ChangeToShape(ShapeDrawingType shapeDrawingType)
         {
+            if (IsAttributeChanging) return;
             if (IsDrawing) return;
 
             CurrentDrawingObjectType = DrawingObjectType.Shape;
             CurrentShapeDrawingType = shapeDrawingType;
+        }
+
+        [RelayCommand]
+        private void CaptureScreen()
+        {
+            // 전체 화면 크기 가져오기
+            int screenWidth = (int)SystemParameters.PrimaryScreenWidth;
+            int screenHeight = (int)SystemParameters.PrimaryScreenHeight;
+
+            // 비트맵 생성
+            using (Bitmap bitmap = new Bitmap(screenWidth, screenHeight))
+            {
+                // 화면 캡처
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.CopyFromScreen(0, 0, 0, 0, new System.Drawing.Size(screenWidth, screenHeight));
+                }
+
+                // Bitmap을 SKBitmap으로 변환
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    bitmap.Save(memoryStream, ImageFormat.Png);
+                    memoryStream.Position = 0;
+
+                    CanvasScreenshotBitmap = SKBitmap.Decode(memoryStream);
+                }
+            }
         }
     }
 }

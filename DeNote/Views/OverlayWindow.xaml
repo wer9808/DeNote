@@ -4,23 +4,62 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DeNote.Views"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
+        xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         mc:Ignorable="d"
         WindowState="Maximized"
         WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent"
         IsHitTestVisible="True"
         ResizeMode="NoResize"
         Focusable="False"
         Title="OverlayWindow">
-    <Canvas x:Name="DrawingCanvas" 
-            IsHitTestVisible="True"
-            Background="#01FFFFFF"
-                MouseLeftButtonDown="DrawingCanvas_MouseLeftButtonDown"
-                MouseMove="DrawingCanvas_MouseMove"
-                MouseLeftButtonUp="DrawingCanvas_MouseLeftButtonUp"
-                StylusDown="DrawingCanvas_StylusDown"
-                StylusMove="DrawingCanvas_StylusMove"
-                StylusUp="DrawingCanvas_StylusUp"
-                />
+    <Grid>
+        <skia:SKGLElement x:Name="DrawingCanvas" 
+                          IsHitTestVisible="True"
+                          PaintSurface="DrawingCanvas_PaintSurface"
+                          MouseLeftButtonDown="DrawingCanvas_MouseLeftButtonDown"
+                          MouseMove="DrawingCanvas_MouseMove"
+                          MouseLeftButtonUp="DrawingCanvas_MouseLeftButtonUp"
+                          StylusDown="DrawingCanvas_StylusDown"
+                          StylusMove="DrawingCanvas_StylusMove"
+                          StylusUp="DrawingCanvas_StylusUp"/>
+        <ToolBarTray x:Name="DrawingToolbar" 
+                     Visibility="{Binding ToolBarVisibility}"
+                      Grid.Row="0" 
+                      HorizontalAlignment="Right" 
+                      VerticalAlignment="Top" 
+                      Margin="0,10">
+            <ToolBar>
+                <ui:Button x:Name="PenBtn" Click="PenBtn_Click" HorizontalAlignment="Stretch" Margin="10">
+                    <!-- Pen -->
+                    <Image Source="pack://application:,,,/DeNote;component/Resources/icon_pen.png" Width="20" Height="20"/>
+                </ui:Button>
+                <ui:Button x:Name="HighlighterBtn" Click="HighlighterBtn_Click" HorizontalAlignment="Stretch" Margin="10">
+                    <!-- Pen -->
+                    <Image Source="pack://application:,,,/DeNote;component/Resources/icon_highlighter.png" Width="20" Height="20"/>
+                </ui:Button>
+                <ui:Button x:Name="ShapeBtn" Click="ShapeBtn_Click" HorizontalAlignment="Stretch" Margin="10">
+                    <!-- Pen -->
+                    <Image Source="pack://application:,,,/DeNote;component/Resources/icon_shape.png" Width="20" Height="20"/>
+                </ui:Button>
+                <Separator />
+                <ui:Button x:Name="ClearDrawingBtn" Click="ClearDrawingBtn_Click" Content="↻" HorizontalAlignment="Stretch" Margin="10"/>
+                <ui:Button x:Name="UndoBtn" Click="UndoBtn_Click" Content="↩" HorizontalAlignment="Stretch" Margin="10"/>
+                <ui:Button x:Name="RedoBtn" Click="RedoBtn_Click" Content="↪" HorizontalAlignment="Stretch" Margin="10"/>
+                <local:DrawingAttributeControl DataContext="{Binding}" />
+                <Separator />
+                <ui:Button x:Name="CloseBtn" Click="CloseBtn_Click" Content="-" Background="IndianRed" HorizontalAlignment="Stretch" Margin="10"/>
+            </ToolBar>
+        </ToolBarTray>
+
+        <tray:NotifyIcon>
+            <tray:NotifyIcon.Menu>
+                <ContextMenu>
+                    <MenuItem Header="열기" Click="NotifyIcon_Show" />
+                    <MenuItem Header="종료" Click="NotifyIcon_Exit" />
+                </ContextMenu>
+            </tray:NotifyIcon.Menu>
+        </tray:NotifyIcon>
+    </Grid>
 </Window>

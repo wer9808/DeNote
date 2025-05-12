@@ -10,13 +10,13 @@ namespace DeNote.Models
 {
     public class BaseDrawingAttribute
     {
-        public Brush Stroke { get; set; } = Brushes.Black; // Stroke color for the object
-        public double StrokeThickness { get; set; } = 1; // Thickness of the stroke
+        public Color Stroke { get; set; } = Colors.Black; // Stroke color for the object
+        public double StrokeThickness { get; set; } = 2; // Thickness of the stroke
 
-        protected double MaxStrokeThickness { get; set; } = 20;
-        protected double MinStrokeThickness { get; set; } = 0.2;
+        public double MaxStrokeThickness { get; set; } = 20;
+        public double MinStrokeThickness { get; set; } = 0.2;
 
-        public Brush Fill { get; set; } = Brushes.Transparent; // Fill color for the object
+        public Color Fill { get; set; } = Colors.Transparent; // Fill color for the object
         public double Opacity { get; set; } = 1.0; // Opacity of the object (0 to 1)
 
         public virtual BaseDrawingAttribute Clone()
@@ -41,6 +41,7 @@ namespace DeNote.Models
     {
         public PenType PenType { get; set; } = PenType.Normal;
         public double Smoothness { get; set; } = 0.2;
+        public bool PressureEnabled { get; internal set; } = true;
 
         public PenStrokeDrawingAttribute(PenType penType = PenType.Normal)
         {
@@ -49,13 +50,14 @@ namespace DeNote.Models
             switch (penType)
             {
                 case PenType.Highlighter:
-                    base.Stroke = Brushes.Yellow;
-                    base.Opacity = 0.5;
-                    base.StrokeThickness = 10;
+                    base.Stroke = Colors.Yellow;
+                    base.Opacity = 0.3;
+                    base.StrokeThickness = 15;
+                    base.MaxStrokeThickness = 30;
                     base.MinStrokeThickness = 5;
                     break;
                 default:
-                    base.Stroke = Brushes.Red;
+                    base.Stroke = Colors.Red;
                     break;
             }
         }
@@ -70,6 +72,7 @@ namespace DeNote.Models
                 StrokeThickness = StrokeThickness,
                 Fill = Fill,
                 Opacity = Opacity,
+                PressureEnabled = PressureEnabled,
             };
         }
 
