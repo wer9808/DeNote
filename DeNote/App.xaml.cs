@@ -24,6 +24,12 @@ namespace DeNote
             _overlayWindow = new OverlayWindow(_drawingViewModel);
             _overlayWindow.Show();
         }
+
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+            // Clean up resources if needed
+            _overlayWindow?.Dispose();
+        }
     }
 
 }

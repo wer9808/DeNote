@@ -22,6 +22,8 @@ using DeNote.ViewModels;
 using SkiaSharp;
 using System.ComponentModel;
 using Wpf.Ui.Tray.Controls;
+using DeNote.Services;
+using Brushes = System.Windows.Media.Brushes;
 
 namespace DeNote.Views
 {
@@ -29,7 +31,7 @@ namespace DeNote.Views
     /// OverlayWindow.xaml에 대한 상호 작용 논리
     /// </summary>
 
-    public partial class OverlayWindow : Window
+    public partial class OverlayWindow : Window, IDisposable
     {
         private const int HOTKEY_ID = 9000;
         private const int WM_HOTKEY = 0x0312;
@@ -48,6 +50,7 @@ namespace DeNote.Views
         private IntPtr _windowHandle;
         private HwndSource _source;
 
+        private ScreenRecorder screenRecorder = new ScreenRecorder();
         private DrawingViewModel viewModel { get => DataContext as DrawingViewModel; }
 
         public OverlayWindow(DrawingViewModel viewModel)
@@ -60,6 +63,8 @@ namespace DeNote.Views
             }
 
             DataContext = viewModel;
+
+            DrawingToolPanel_ToolChanged();
 
             this.Loaded += OverlayWindow_Loaded;
             this.Closing += OverlayWindow_Closing;
@@ -323,11 +328,54 @@ namespace DeNote.Views
 
         }
 
+        private void DrawingToolPanel_ToolChanged()
+        {
+            if (viewModel == null) return;
+
+            Button currentToolButton = null;
+
+            switch (viewModel.CurrentDrawingObjectType)
+            {
+                case Models.DrawingObjectType.Pen:
+                    if (viewModel.CurrentPenType == PenType.Normal)
+                    {
+                        currentToolButton = PenBtn;
+                    }
+                    else
+                    {
+                        currentToolButton = HighlighterBtn;
+                    }
+                    break;
+                case Models.DrawingObjectType.Shape:
+                    currentToolButton = ShapeBtn;
+                    break;
+                default:
+                    break;
+            }
+
+            foreach (var child in DrawingToolPanel.Children)
+            {
+                if (child is Button button)
+                {
+                    if (button == currentToolButton)
+                    {
+                        button.Background = Brushes.Orange;
+                    }
+                    else
+                    {
+                        button.Background = Brushes.Transparent;
+                    }
+                }
+            }
+
+        }
+
         private void PenBtn_Click(object sender, RoutedEventArgs e)
         {
             if (viewModel != null)
             {
                 viewModel.ChangeToPenCommand.Execute(PenType.Normal);
+                DrawingToolPanel_ToolChanged();
             }
         }
 
@@ -336,6 +384,7 @@ namespace DeNote.Views
             if (viewModel != null)
             {
                 viewModel.ChangeToPenCommand.Execute(PenType.Highlighter);
+                DrawingToolPanel_ToolChanged();
             }
         }
 
@@ -344,6 +393,7 @@ namespace DeNote.Views
             if (viewModel != null)
             {
                 viewModel.ChangeToShapeCommand.Execute(ShapeDrawingType.Ellipse);
+                DrawingToolPanel_ToolChanged();
             }
         }
 
@@ -378,6 +428,19 @@ namespace DeNote.Views
         {
             HideToTray();
         }
+        private void RecordBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (screenRecorder.IsRecording)
+            {
+                screenRecorder.StopRecording();
+                RecordBtn.Content = "🎦";
+            }
+            else
+            {
+                screenRecorder.StartRecording();
+                RecordBtn.Content = "⏹️";
+            }
+        }
 
         private void NotifyIcon_Show(object sender, RoutedEventArgs e)
         {
@@ -398,6 +461,42 @@ namespace DeNote.Views
                 handled = true;
             }
             return IntPtr.Zero;
+        }
+
+        public void Dispose()
+        {
+            screenRecorder.Dispose();
+            // 핫키 등록 해제
+            UnregisterHotKey(_windowHandle, HOTKEY_ID);
+            // HwndSource 정리
+            _source?.RemoveHook(HwndHook);
+            _source?.Dispose();
+        }
+
+        private void SaveBtn_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void DrawingCanvas_TouchDown(object sender, TouchEventArgs e)
+        {
+            if (viewModel != null)
+            {
+                var startPoint = new StylusPoint(e.GetTouchPoint(DrawingCanvas).Position.X, e.GetTouchPoint(DrawingCanvas).Position.Y, 1.0f);
+                viewModel.StartDrawingCommand.Execute(startPoint);
+                DrawingCanvas.InvalidateVisual();
+                e.Handled = true;
+            }
+        }
+
+        private void DrawingCanvas_TouchMove(object sender, TouchEventArgs e)
+        {
+
+        }
+
+        private void DrawingCanvas_TouchUp(object sender, TouchEventArgs e)
+        {
+
         }
     }
 }

@@ -122,6 +122,22 @@ namespace DeNote.Views
             }
 
             ShowColorPickerBtn.Visibility = Visibility.Visible;
+            switch (viewModel.CurrentDrawingObjectType)
+            {
+                case DrawingObjectType.Pen:
+                    if (viewModel.CurrentPenType == PenType.Normal)
+                    {
+                        CurrentColorPreviewCircle.Fill = new SolidColorBrush(viewModel.NormalPenAttribute.Stroke);
+                    }
+                    else
+                    {
+                        CurrentColorPreviewCircle.Fill = new SolidColorBrush(viewModel.HighlighterAttribute.Stroke);
+                    }
+                    break;
+                case DrawingObjectType.Shape:
+                    CurrentColorPreviewCircle.Fill = new SolidColorBrush(viewModel.ShapeDrawingAttribute.Stroke);
+                    break;
+            }
 
             InitializeColorPickerPopup();
         }
@@ -138,16 +154,16 @@ namespace DeNote.Views
             {
                 if (viewModel.CurrentPenType == PenType.Normal)
                 {
-                    currentColorPreview.Fill = new SolidColorBrush(viewModel.NormalPenAttribute.Stroke);
+                    CurrentColorPreviewCircle.Fill = new SolidColorBrush(viewModel.NormalPenAttribute.Stroke);
                 }
                 else
                 {
-                    currentColorPreview.Fill = new SolidColorBrush(viewModel.HighlighterAttribute.Stroke);
+                    CurrentColorPreviewCircle.Fill = new SolidColorBrush(viewModel.HighlighterAttribute.Stroke);
                 }
             }
             else if (viewModel.CurrentDrawingObjectType == DrawingObjectType.Shape)
             {
-                currentColorPreview.Fill = new SolidColorBrush(viewModel.ShapeDrawingAttribute.Stroke);
+                CurrentColorPreviewCircle.Fill = new SolidColorBrush(viewModel.ShapeDrawingAttribute.Stroke);
             }
         }
 
@@ -160,6 +176,8 @@ namespace DeNote.Views
                 return;
             }
             ShowShapePickerBtn.Visibility = Visibility.Visible;
+
+            FillOptionCheckBox.IsChecked = viewModel.ShapeDrawingAttribute.IsFilled;
 
             if (viewModel.CurrentShapeDrawingType == ShapeDrawingType.Rectangle)
             {
@@ -179,15 +197,35 @@ namespace DeNote.Views
                 ShapePickerPopup.IsOpen = false;
                 return;
             }
+
+            Button selectedShapeButton = null;
+
             if (viewModel.CurrentShapeDrawingType == ShapeDrawingType.Rectangle)
             {
+                selectedShapeButton = RectangleBtn;
                 RectangleBtn.Background = Brushes.LightSkyBlue;
                 EllipseBtn.Background = Brushes.White;
             }
             else if (viewModel.CurrentShapeDrawingType == ShapeDrawingType.Ellipse)
             {
+                selectedShapeButton = EllipseBtn;
                 RectangleBtn.Background = Brushes.White;
                 EllipseBtn.Background = Brushes.LightSkyBlue;
+            }
+
+            foreach (var child in ShapesPanel.Children)
+            {
+                if (child is Button button)
+                {
+                    if (button == selectedShapeButton)
+                    {
+                        button.Background = Brushes.LightSkyBlue;
+                    }
+                    else
+                    {
+                        button.Background = Brushes.White;
+                    }
+                }
             }
         }
 
@@ -220,26 +258,27 @@ namespace DeNote.Views
             if (rect != null)
             {
                 var brush = rect.Fill as SolidColorBrush;
-                var color = brush.Color;
-                if (color != null)
+                if (brush == null)
                 {
-                    if (viewModel.CurrentDrawingObjectType == DrawingObjectType.Pen)
-                    {
-                        if (viewModel.CurrentPenType == PenType.Normal)
-                        {
-                            viewModel.NormalPenAttribute.Stroke = color;
-                        }
-                        else
-                        {
-                            viewModel.HighlighterAttribute.Stroke = color;
-                        }
-                    }
-                    else if (viewModel.CurrentDrawingObjectType == DrawingObjectType.Shape)
-                    {
-                        viewModel.ShapeDrawingAttribute.Stroke = color;
-                    }
-                    currentColorPreview.Fill = brush;
+                    return;
                 }
+                var color = brush.Color;
+                if (viewModel.CurrentDrawingObjectType == DrawingObjectType.Pen)
+                {
+                    if (viewModel.CurrentPenType == PenType.Normal)
+                    {
+                        viewModel.NormalPenAttribute.Stroke = color;
+                    }
+                    else
+                    {
+                        viewModel.HighlighterAttribute.Stroke = color;
+                    }
+                }
+                else if (viewModel.CurrentDrawingObjectType == DrawingObjectType.Shape)
+                {
+                    viewModel.ShapeDrawingAttribute.Stroke = color;
+                }
+                CurrentColorPreviewCircle.Fill = brush;
             }
         }
 
@@ -257,6 +296,8 @@ namespace DeNote.Views
                     viewModel.CurrentShapeDrawingType = ShapeDrawingType.Ellipse;
                 }
             }
+
+            InitializeShapePickerPopup();
         }
 
         private void ShowThicknessBtn_Click(object sender, RoutedEventArgs e)
@@ -294,5 +335,20 @@ namespace DeNote.Views
 
             InitializeShapePickerPopup();
         }
+
+        private void FillOptionCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (viewModel == null)
+                return;
+
+            var checkBox = sender as CheckBox;
+
+            var isChecked = checkBox?.IsChecked ?? false;
+            if (viewModel.CurrentDrawingObjectType == DrawingObjectType.Shape)
+            {
+                viewModel.ShapeDrawingAttribute.IsFilled = isChecked;
+            }
+        }
+
     }
 }

@@ -57,17 +57,8 @@ namespace DeNote.Models
             {
                 case DrawingObjectType.Pen:
                     var penStroke = drawingObject as PenStroke;
-                    switch (penStroke.PenType)
-                    {
-                        case PenType.Normal:
-                            DrawStroke(canvas, penStroke);
-                            break;
-                        case PenType.Highlighter:
-                            DrawHighlihterStroke(canvas, penStroke);
-                            break;
-                        default:
-                            throw new NotSupportedException($"Pen type '{penStroke.PenType}' is not supported.");
-                    }
+                    DrawStroke(canvas, penStroke);
+                    // DrawStroke(canvas, penStroke);
                     break;
                 case DrawingObjectType.Shape:
                     DrawShape(canvas, drawingObject as ShapeDrawingObject);
@@ -83,45 +74,42 @@ namespace DeNote.Models
             var pathFitter = new PathFitter(1.0);
 
             var skPoints = penStroke.Points.Select(p => new SKPoint((float)p.X, (float)p.Y)).ToList();
-            var skColor = penStroke.Stroke.ToSKColor();
-
             var smoothedPath = pathFitter.CreateCatmullRomPath(skPoints);
 
-            using (var paint = new SKPaint
+            var skColor = penStroke.Stroke.ToSKColor();
+
+            if (penStroke.PenType == PenType.Highlighter)
             {
-                Style = SKPaintStyle.Stroke,
-                Color = skColor,
-                StrokeWidth = (float)penStroke.StrokeThickness,
-                StrokeCap = SKStrokeCap.Round,
-                StrokeJoin = SKStrokeJoin.Round,
-                IsAntialias = true,
-            })
-            {
-                canvas.DrawPath(smoothedPath, paint);
+                skColor = skColor.WithAlpha((byte)(skColor.Alpha * penStroke.Opacity));
+
+                using (var paint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    Color = skColor,
+                    StrokeWidth = (float)penStroke.StrokeThickness,
+                    StrokeCap = SKStrokeCap.Round,
+                    StrokeJoin = SKStrokeJoin.Round,
+                    IsAntialias = true,
+                    BlendMode = SKBlendMode.SrcOver,
+                })
+                {
+                    canvas.DrawPath(smoothedPath, paint);
+                }
             }
-
-        }
-
-        public static void DrawHighlihterStroke(SKCanvas canvas, PenStroke penStroke)
-        {
-            var pathFitter = new PathFitter(1.0);
-            var skPoints = penStroke.Points.Select(p => new SKPoint((float)p.X, (float)p.Y)).ToList();
-            var skColor = penStroke.Stroke.ToSKColor();
-            skColor = skColor.WithAlpha((byte)(skColor.Alpha * penStroke.Opacity));
-
-            var smoothedPath = pathFitter.CreateCatmullRomPath(skPoints);
-            using (var paint = new SKPaint
+            else
             {
-                Style = SKPaintStyle.Stroke,
-                Color = skColor,
-                StrokeWidth = (float)penStroke.StrokeThickness,
-                StrokeCap = SKStrokeCap.Round,
-                StrokeJoin = SKStrokeJoin.Round,
-                IsAntialias = true,
-                BlendMode = SKBlendMode.SrcOver,
-            })
-            {
-                canvas.DrawPath(smoothedPath, paint);
+                using (var paint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    Color = skColor,
+                    StrokeWidth = (float)penStroke.StrokeThickness,
+                    StrokeCap = SKStrokeCap.Round,
+                    StrokeJoin = SKStrokeJoin.Round,
+                    IsAntialias = true,
+                })
+                {
+                    canvas.DrawPath(smoothedPath, paint);
+                }
             }
         }
 
@@ -256,9 +244,10 @@ namespace DeNote.Models
                 var rectangle = shapeDrawingObject as RectangleShape;
                 var rect = new SKRect((float)rectangle.Position.X, (float)rectangle.Position.Y,
                     (float)(rectangle.Position.X + rectangle.Size.Width), (float)(rectangle.Position.Y + rectangle.Size.Height));
+
                 using (var paint = new SKPaint
                 {
-                    Style = SKPaintStyle.Stroke,
+                    Style = rectangle.IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
                     Color = rectangle.Stroke.ToSKColor(),
                     StrokeWidth = (float)rectangle.StrokeThickness,
                     IsAntialias = true,
@@ -276,7 +265,7 @@ namespace DeNote.Models
                 var radiusY = (float)ellipse.RadiusY;
                 using (var paint = new SKPaint
                 {
-                    Style = SKPaintStyle.Stroke,
+                    Style = ellipse.IsFilled ? SKPaintStyle.Fill : SKPaintStyle.Stroke,
                     Color = ellipse.Stroke.ToSKColor(),
                     StrokeWidth = (float)ellipse.StrokeThickness,
                     IsAntialias = true,

@@ -10,13 +10,26 @@
              mc:Ignorable="d">
     <Grid>
         <StackPanel Orientation="Horizontal">
-            <ui:Button x:Name="ShowThicknessBtn" Click="ShowThicknessBtn_Click" Content="두께" HorizontalAlignment="Stretch" Margin="10"/>
-            <ui:Button x:Name="ShowColorPickerBtn" Click="ShowColorPickerBtn_Click" Content="색상" HorizontalAlignment="Stretch" Margin="10"/>
-            <ui:Button x:Name="ShowShapePickerBtn" Click="ShowShapePickerBtn_Click" Content="모양" HorizontalAlignment="Stretch" Margin="10"/>
+            <ui:Button x:Name="ShowThicknessBtn" Click="ShowThicknessBtn_Click" 
+                       BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
+                       HorizontalAlignment="Stretch" CornerRadius="20" Margin="10" Padding="10">
+                <TextBlock Text="✒️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </ui:Button>
+            <ui:Button x:Name="ShowColorPickerBtn" Click="ShowColorPickerBtn_Click"
+                       BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
+                       HorizontalAlignment="Stretch" CornerRadius="20" Margin="10" Padding="10">
+                <Ellipse x:Name="CurrentColorPreviewCircle" Width="20" Height="20" Stroke="#C0FFFFFF" StrokeThickness="1"/>
+            </ui:Button>
+            <ui:Button x:Name="ShowShapePickerBtn" Click="ShowShapePickerBtn_Click"
+                       BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
+                       HorizontalAlignment="Stretch" CornerRadius="20" Margin="10" Padding="10">
+                <TextBlock Text="🔶" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </ui:Button>
         </StackPanel>
         <Popup x:Name="ThicknessPopup" PlacementTarget="{Binding ElementName=ShowThicknessBtn}" StaysOpen="False" Placement="Bottom">
             <Border Background="White" BorderBrush="Black" BorderThickness="1" Padding="10">
                 <StackPanel>
+                    <TextBlock Text="두께" FontWeight="Bold" Margin="0,0,0,10"/>
                     <Slider x:Name="ThicknessSlider" Background="White" ValueChanged="ThicknessSlider_ValueChanged" Value="1" />
                     <TextBlock Text="{Binding ElementName=ThicknessSlider, Path=Value, StringFormat={}{0:F1}}" Margin="5" />
                 </StackPanel>
@@ -38,21 +51,19 @@
                         <Rectangle Fill="Pink" Width="30" Height="30" Margin="2" MouseDown="ColorRect_MouseDown"/>
                         <Rectangle Fill="Black" Width="30" Height="30" Margin="2" MouseDown="ColorRect_MouseDown"/>
                     </WrapPanel>
-
-                    <!-- 현재 선택된 색상 표시 -->
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <TextBlock Text="선택한 색상:"/>
-                        <Rectangle x:Name="currentColorPreview" Width="30" Height="20" Margin="5,0,0,0"/>
-                    </StackPanel>
                 </StackPanel>
             </Border>
         </Popup>
         <Popup x:Name="ShapePickerPopup" PlacementTarget="{Binding ElementName=ShowShapePickerBtn}" StaysOpen="False" Placement="Bottom">
             <Border Background="White" BorderBrush="Black" BorderThickness="1" Padding="10">
                 <StackPanel Width="200">
+                    <TextBlock Text="옵션" FontWeight="Bold" FontSize="14"/>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox x:Name="FillOptionCheckBox" Content="채우기" Margin="5" Checked="FillOptionCheckBox_Checked" Unchecked="FillOptionCheckBox_Checked"/>
+                    </StackPanel>
                     <TextBlock Text="도형 선택" FontWeight="Bold" Margin="0,0,0,10"/>
                     <!-- 도형 선택 버튼들 -->
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel x:Name="ShapesPanel" Orientation="Horizontal">
                         <Button x:Name="RectangleBtn" Content="사각형" Click="ShapeBtn_Click" Tag="Rectangle" Margin="5"/>
                         <Button x:Name="EllipseBtn" Content="원" Click="ShapeBtn_Click" Tag="Ellipse" Margin="5"/>
                     </StackPanel>

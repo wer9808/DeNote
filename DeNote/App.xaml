@@ -6,7 +6,8 @@
              xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
              xmlns:vio="http://schemas.lepo.co/wpfui/2022/xaml/violeta"
              xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
-             Startup="Application_Startup">
+             Startup="Application_Startup"
+             Exit="Application_Exit">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
