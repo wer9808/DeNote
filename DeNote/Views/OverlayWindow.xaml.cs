@@ -18,12 +18,14 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using DeNote.Models;
-using DeNote.ViewModels;
 using SkiaSharp;
 using System.ComponentModel;
 using Wpf.Ui.Tray.Controls;
 using DeNote.Services;
 using Brushes = System.Windows.Media.Brushes;
+using DeNote.Models.Drawing;
+using DeNote.Models.DeNote.Models;
+using Color = System.Windows.Media.Color;
 
 namespace DeNote.Views
 {
@@ -51,29 +53,21 @@ namespace DeNote.Views
         private HwndSource _source;
 
         private ScreenRecorder screenRecorder = new ScreenRecorder();
-        private DrawingViewModel viewModel { get => DataContext as DrawingViewModel; }
 
-        public OverlayWindow(DrawingViewModel viewModel)
+        public OverlayWindow()
         {
             InitializeComponent();
-
-            if (viewModel != null)
-            {
-                viewModel.CaptureScreenCommand.Execute(null);
-            }
-
-            DataContext = viewModel;
-
-            DrawingToolPanel_ToolChanged();
 
             this.Loaded += OverlayWindow_Loaded;
             this.Closing += OverlayWindow_Closing;
             this.Activated += OverlayWindow_Activated;
-            this.KeyDown += OverlayWindow_KeyDown;
         }
 
         private void OverlayWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            UpdateColorPreview();
+            UpdateToolButtonStates();
+
             // 창 핸들 가져오기
             _windowHandle = new WindowInteropHelper(this).Handle;
             _source = HwndSource.FromHwnd(_windowHandle);
@@ -82,6 +76,7 @@ namespace DeNote.Views
             // 글로벌 핫키 등록 (Ctrl+Shift+F)
             RegisterHotKey(_windowHandle, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, VK_F);
         }
+
         private void OverlayWindow_Closing(object? sender, CancelEventArgs e)
         {
             // 핫키 등록 해제
@@ -95,22 +90,6 @@ namespace DeNote.Views
         private void OverlayWindow_Activated(object? sender, EventArgs e)
         {
 
-            if (viewModel != null)
-            {
-                viewModel.CaptureScreenCommand.Execute(null);
-                DrawingCanvas.InvalidateVisual();
-            }
-
-        }
-
-        private void OverlayWindow_KeyDown(object sender, KeyEventArgs e)
-        {
-            // Ctrl+Shift+F 키 조합 확인
-            if (e.Key == Key.F && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
-            {
-                ToggleWindowVisibility();
-                e.Handled = true;
-            }
         }
 
         private void ToggleWindowVisibility()
@@ -135,153 +114,11 @@ namespace DeNote.Views
         {
             // 창 보이기
             Show();
+
+            Dispatcher.InvokeAsync(DrawingCanvas.CaptureBackgroundAsync);
+
             WindowState = WindowState.Maximized;
             Activate();
-        }
-
-        private void DrawingCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.StylusDevice != null) return;
-            if (viewModel != null)
-            {
-                var startPoint = new StylusPoint(e.GetPosition(DrawingCanvas).X, e.GetPosition(DrawingCanvas).Y, 1.0f);
-                viewModel.StartDrawingCommand.Execute(startPoint);
-                DrawingCanvas.InvalidateVisual();
-                e.Handled = true;
-            }
-        }
-
-        private void DrawingCanvas_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.StylusDevice != null) return;
-
-            if (e.LeftButton == MouseButtonState.Pressed && viewModel != null && viewModel.IsDrawing)
-            {
-                var currentPoint = new StylusPoint(e.GetPosition(DrawingCanvas).X, e.GetPosition(DrawingCanvas).Y, 1.0f);
-                if (viewModel.CurrentDrawingObjectType == DrawingObjectType.Pen && IsPointOutsideCanvas(currentPoint))
-                {
-                    viewModel.EndDrawingCommand.Execute(currentPoint);
-                }
-                else
-                {
-                    viewModel.UpdateDrawingCommand.Execute(currentPoint);
-                }
-
-                DrawingCanvas.InvalidateVisual();
-                e.Handled = true;
-            }
-        }
-
-        private void DrawingCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            if (e.StylusDevice != null) return;
-
-            if (viewModel != null && viewModel.IsDrawing)
-            {
-                var endPoint = new StylusPoint(e.GetPosition(DrawingCanvas).X, e.GetPosition(DrawingCanvas).Y, 1.0f);
-                viewModel.EndDrawingCommand.Execute(endPoint);
-                DrawingCanvas.InvalidateVisual();
-                e.Handled = true;
-            }
-        }
-
-        private void DrawingCanvas_StylusDown(object sender, StylusDownEventArgs e)
-        {
-
-            if (viewModel != null)
-            {
-                var stylusPoints = e.GetStylusPoints(DrawingCanvas);
-                var startPoint = stylusPoints[0];
-
-                viewModel.StartDrawingCommand.Execute(startPoint);
-                if (viewModel.CurrentDrawingObjectType == Models.DrawingObjectType.Pen)
-                {
-                    for (int i = 1; i < stylusPoints.Count; i++)
-                    {
-                        var currentPoint = stylusPoints[i];
-                        viewModel.UpdateDrawingCommand.Execute(currentPoint);
-                    }
-                }
-                else
-                {
-                    var currentPoint = stylusPoints.Last();
-                    viewModel.UpdateDrawingCommand.Execute(currentPoint);
-                }
-                DrawingCanvas.InvalidateVisual();
-                e.Handled = true;
-            }
-
-        }
-
-        private void DrawingCanvas_StylusMove(object sender, StylusEventArgs e)
-        {
-
-            if (viewModel != null && viewModel.IsDrawing)
-            {
-                var stylusPoints = e.GetStylusPoints(DrawingCanvas);
-
-                if (viewModel.CurrentDrawingObjectType == Models.DrawingObjectType.Pen)
-                {
-                    for (int i = 0; i < stylusPoints.Count; i++)
-                    {
-                        if (i + 1 < stylusPoints.Count && IsPointOutsideCanvas(stylusPoints[i + 1]))
-                        {
-                            var endPoint = stylusPoints[i];
-                            viewModel.EndDrawingCommand.Execute(endPoint);
-                        }
-                        else
-                        {
-                            var currentPoint = stylusPoints[i];
-                            viewModel.UpdateDrawingCommand.Execute(currentPoint);
-                        }
-                    }
-                }
-                else
-                {
-                    var currentPoint = stylusPoints.Last();
-                    viewModel.UpdateDrawingCommand.Execute(currentPoint);
-                }
-                DrawingCanvas.InvalidateVisual();
-                e.Handled = true;
-            }
-        }
-
-        private void DrawingCanvas_StylusUp(object sender, StylusEventArgs e)
-        {
-
-            if (viewModel != null && viewModel.IsDrawing)
-            {
-                var stylusPoints = e.GetStylusPoints(DrawingCanvas);
-
-                if (viewModel.CurrentDrawingObjectType == Models.DrawingObjectType.Pen)
-                {
-                    for (int i = 0; i < stylusPoints.Count - 1; i++)
-                    {
-                        var currentPoint = stylusPoints[i];
-                        viewModel.UpdateDrawingCommand.Execute(currentPoint);
-                    }
-                    var endPoint = stylusPoints.Last();
-                    viewModel.EndDrawingCommand.Execute(endPoint);
-                }
-                else
-                {
-                    var endPoint = stylusPoints.Last();
-                    viewModel.EndDrawingCommand.Execute(endPoint);
-                }
-
-                DrawingCanvas.InvalidateVisual();
-                e.Handled = true;
-            }
-
-        }
-        private bool IsPointOutsideCanvas(StylusPoint point)
-        {
-            // 캔버스 경계 확인
-            double x = point.X;
-            double y = point.Y;
-
-            return (x < 0 || x > DrawingCanvas.ActualWidth ||
-                    y < 0 || y > DrawingCanvas.ActualHeight);
         }
 
         // 윈도우 위치 설정 (예: 화면 오른쪽 상단)
@@ -294,134 +131,167 @@ namespace DeNote.Views
             this.Height = SystemParameters.PrimaryScreenHeight;
         }
 
-        private void DrawingCanvas_PaintSurface(object sender, SkiaSharp.Views.Desktop.SKPaintGLSurfaceEventArgs e)
-        {
-            var canvas = e.Surface.Canvas;
-
-            canvas.Clear(SKColors.Transparent);
-
-            if (viewModel == null) return;
-
-            // 캡처한 화면을 그립니다.
-            if (viewModel.CanvasScreenshotBitmap != null)
-            {
-                var screenshotBitmap = viewModel.CanvasScreenshotBitmap;
-
-                // 전체 화면 크기 가져오기
-                int screenWidth = (int)SystemParameters.PrimaryScreenWidth;
-                int screenHeight = (int)SystemParameters.PrimaryScreenHeight;
-
-                SKRect destRect = new SKRect(0, 0, screenWidth, screenHeight);
-                canvas.DrawBitmap(screenshotBitmap, destRect);
-            }
-
-            foreach (var drawingObject in viewModel.DrawingObjects)
-            {
-                DrawingObject.DrawObject(canvas, drawingObject);
-            }
-
-            var currentDrawingObject = viewModel.CurrentDrawingObject;
-            if (currentDrawingObject != null)
-            {
-                DrawingObject.DrawObject(canvas, currentDrawingObject);
-            }
-
-        }
-
-        private void DrawingToolPanel_ToolChanged()
-        {
-            if (viewModel == null) return;
-
-            Button currentToolButton = null;
-
-            switch (viewModel.CurrentDrawingObjectType)
-            {
-                case Models.DrawingObjectType.Pen:
-                    if (viewModel.CurrentPenType == PenType.Normal)
-                    {
-                        currentToolButton = PenBtn;
-                    }
-                    else
-                    {
-                        currentToolButton = HighlighterBtn;
-                    }
-                    break;
-                case Models.DrawingObjectType.Shape:
-                    currentToolButton = ShapeBtn;
-                    break;
-                default:
-                    break;
-            }
-
-            foreach (var child in DrawingToolPanel.Children)
-            {
-                if (child is Button button)
-                {
-                    if (button == currentToolButton)
-                    {
-                        button.Background = Brushes.Orange;
-                    }
-                    else
-                    {
-                        button.Background = Brushes.Transparent;
-                    }
-                }
-            }
-
-        }
 
         private void PenBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (viewModel != null)
-            {
-                viewModel.ChangeToPenCommand.Execute(PenType.Normal);
-                DrawingToolPanel_ToolChanged();
-            }
+            DrawingCanvas.ChangeTool(QIDrawingToolType.Pen);
+            UpdateColorPreview();
+            UpdateToolButtonStates();
         }
 
         private void HighlighterBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (viewModel != null)
+            DrawingCanvas.ChangeTool(QIDrawingToolType.Highlighter);
+            UpdateColorPreview();
+            UpdateToolButtonStates();
+        }
+
+
+        private void UpdateShapeButtonsState()
+        {
+
+            var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
+
+            RectangleBtn.Background = Brushes.White;
+            EllipseBtn.Background = Brushes.White;
+            TriangleBtn.Background = Brushes.White;
+            LineBtn.Background = Brushes.White;
+
+            var shapeType = settings.Type;
+            switch (shapeType)
             {
-                viewModel.ChangeToPenCommand.Execute(PenType.Highlighter);
-                DrawingToolPanel_ToolChanged();
+                case QIShapeType.Rectangle:
+                    RectangleBtn.Background = Brushes.Orange;
+                    break;
+                case QIShapeType.Ellipse:
+                    EllipseBtn.Background = Brushes.Orange;
+                    break;
+                case QIShapeType.Triangle:
+                    TriangleBtn.Background = Brushes.Orange;
+                    break;
+                case QIShapeType.Line:
+                    LineBtn.Background = Brushes.Orange;
+                    break;
             }
+        }
+
+        private void InitializeShapePickerPopup()
+        {
+            var toolType = DrawingCanvas.GetCurrentToolType();
+
+            if (toolType != QIDrawingToolType.Shape)
+            {
+                return;
+            }
+
+            UpdateShapeButtonsState();
+        }
+
+        private void FillOptionCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
+
+            var checkBox = sender as CheckBox;
+            if (checkBox != null)
+            {
+                var fillOption = checkBox.IsChecked ?? false;
+                settings.FillOption = fillOption;
+                settings.FillColor = settings.Color;
+                DrawingCanvas.UpdateToolSettings(settings);
+            }
+        }
+
+        private void ShapeTypeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+
+            var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
+
+            if (button != null && settings != null)
+            {
+                switch (button.Tag.ToString())
+                {
+                    case "Rectangle":
+                        settings.Type = QIShapeType.Rectangle;
+                        break;
+                    case "Ellipse":
+                        settings.Type = QIShapeType.Ellipse;
+                        break;
+                    case "Triangle":
+                        settings.Type = QIShapeType.Triangle;
+                        break;
+                    case "Line":
+                        settings.Type = QIShapeType.Line;
+                        break;
+                }
+
+                DrawingCanvas.UpdateToolSettings(settings);
+                UpdateShapeButtonsState();
+            }
+
         }
 
         private void ShapeBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (viewModel != null)
+            var toolType = DrawingCanvas.GetCurrentToolType();
+
+            if (toolType == QIDrawingToolType.Shape)
             {
-                viewModel.ChangeToShapeCommand.Execute(ShapeDrawingType.Ellipse);
-                DrawingToolPanel_ToolChanged();
+                // 이미 도형 도구가 선택된 경우
+                // 도형 선택 팝업 열기
+                InitializeShapePickerPopup();
+                ShapePickerPopup.IsOpen = !ShapePickerPopup.IsOpen;
+            }
+            else
+            {
+                // 도형 도구로 변경
+                DrawingCanvas.ChangeTool(QIDrawingToolType.Shape);
+
+                UpdateColorPreview();
+                UpdateToolButtonStates();
             }
         }
 
+
+        private void UpdateToolButtonStates()
+        {
+            // 모든 버튼의 배경을 초기화
+            PenBtn.Background = Brushes.Transparent;
+            HighlighterBtn.Background = Brushes.Transparent;
+            ShapeBtn.Background = Brushes.Transparent;
+
+            var toolType = DrawingCanvas.GetCurrentToolType();
+            var selectedColor = Brushes.Orange;
+
+            // 선택된 버튼의 배경만 변경
+            switch (toolType)
+            {
+                case QIDrawingToolType.Pen:
+                    PenBtn.Background = selectedColor;
+                    break;
+                case QIDrawingToolType.Highlighter:
+                    HighlighterBtn.Background = selectedColor;
+                    break;
+                case QIDrawingToolType.Shape:
+                    ShapeBtn.Background = selectedColor;
+                    break;
+            }
+        }
+
+
         private void ClearDrawingBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (viewModel != null)
-            {
-                viewModel.ClearDrawingCommand.Execute(null);
-                DrawingCanvas.InvalidateVisual();
-            }
+            DrawingCanvas.Clear();
         }
 
         private void UndoBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (viewModel != null)
-            {
-                viewModel.UndoCommand.Execute(null);
-                DrawingCanvas.InvalidateVisual();
-            }
+            DrawingCanvas.Undo();
         }
 
         private void RedoBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (viewModel != null)
-            {
-                viewModel.RedoCommand.Execute(null);
-                DrawingCanvas.InvalidateVisual();
-            }
+            DrawingCanvas.Redo();
         }
 
         private void CloseBtn_Click(object sender, RoutedEventArgs e)
@@ -478,25 +348,119 @@ namespace DeNote.Views
 
         }
 
-        private void DrawingCanvas_TouchDown(object sender, TouchEventArgs e)
+        private void SettingBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (viewModel != null)
+
+        }
+
+        private void UpdateColorPreview()
+        {
+            var toolType = DrawingCanvas.GetCurrentToolType();
+            if (toolType == QIDrawingToolType.Pen)
             {
-                var startPoint = new StylusPoint(e.GetTouchPoint(DrawingCanvas).Position.X, e.GetTouchPoint(DrawingCanvas).Position.Y, 1.0f);
-                viewModel.StartDrawingCommand.Execute(startPoint);
-                DrawingCanvas.InvalidateVisual();
-                e.Handled = true;
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIPenToolSettings;
+                ColorPreviewCircle.Fill = new SolidColorBrush(Color.FromArgb(settings.Color.Alpha, settings.Color.Red, settings.Color.Green, settings.Color.Blue));
+            }
+            else if (toolType == QIDrawingToolType.Highlighter)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIHighlighterToolSettings;
+                ColorPreviewCircle.Fill = new SolidColorBrush(Color.FromArgb(settings.Color.Alpha, settings.Color.Red, settings.Color.Green, settings.Color.Blue));
+            }
+            else if (toolType == QIDrawingToolType.Shape)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
+                ColorPreviewCircle.Fill = new SolidColorBrush(Color.FromArgb(settings.Color.Alpha, settings.Color.Red, settings.Color.Green, settings.Color.Blue));
             }
         }
 
-        private void DrawingCanvas_TouchMove(object sender, TouchEventArgs e)
+        private void ColorPickerBtn_Click(object sender, RoutedEventArgs e)
         {
-
+            ColorPickerPopup.IsOpen = !ColorPickerPopup.IsOpen;
         }
 
-        private void DrawingCanvas_TouchUp(object sender, TouchEventArgs e)
+        private void ThicknessBtn_Click(object sender, RoutedEventArgs e)
         {
+            var toolType = DrawingCanvas.GetCurrentToolType();
+            if (toolType == QIDrawingToolType.Pen)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIPenToolSettings;
+                ThicknessSlider.Value = settings.StrokeWidth;
+            }
+            else if (toolType == QIDrawingToolType.Highlighter)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIHighlighterToolSettings;
+                ThicknessSlider.Value = settings.StrokeWidth;
+            }
+            else if (toolType == QIDrawingToolType.Shape)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
+                ThicknessSlider.Value = settings.StrokeWidth;
+            }
 
+            ThicknessPopup.IsOpen = !ThicknessPopup.IsOpen;
         }
+
+
+        private void ColorBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            if (button != null)
+            {
+                        // 색상 선택 팝업 열기
+                var color = (Color)button.Background.GetValue(SolidColorBrush.ColorProperty);
+
+                var toolType = DrawingCanvas.GetCurrentToolType();
+                if (toolType == QIDrawingToolType.Pen)
+                {
+                    var settings = DrawingCanvas.GetCurrentToolSettings() as QIPenToolSettings;
+                    settings.Color = SKColor.Parse(color.ToString());
+                    DrawingCanvas.UpdateToolSettings(settings);
+                }
+                else if (toolType == QIDrawingToolType.Highlighter)
+                {
+                    var settings = DrawingCanvas.GetCurrentToolSettings() as QIHighlighterToolSettings;
+                    settings.Color = SKColor.Parse(color.ToString());
+                    DrawingCanvas.UpdateToolSettings(settings);
+                }
+                else if (toolType == QIDrawingToolType.Shape)
+                {
+                    var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
+                    settings.Color = SKColor.Parse(color.ToString());
+                    DrawingCanvas.UpdateToolSettings(settings);
+                }
+
+                        // 선택된 색상으로 도구 설정 업데이트
+                UpdateColorPreview();
+            }
+        }
+
+        private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            var toolType = DrawingCanvas.GetCurrentToolType();
+            if (toolType == QIDrawingToolType.Pen)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIPenToolSettings;
+                settings.StrokeWidth = (float)e.NewValue;
+                DrawingCanvas.UpdateToolSettings(settings);
+            }
+            else if (toolType == QIDrawingToolType.Highlighter)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIHighlighterToolSettings;
+                settings.StrokeWidth = (float)e.NewValue;
+                DrawingCanvas.UpdateToolSettings(settings);
+            }
+            else if (toolType == QIDrawingToolType.Shape)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
+                settings.StrokeWidth = (float)e.NewValue;
+                DrawingCanvas.UpdateToolSettings(settings);
+            }
+        }
+
+        private async void ToggleBackgroundBtn_Click(object sender, RoutedEventArgs e)
+        {
+            await DrawingCanvas.ToggleBackgroundOption();
+        }
+
     }
 }

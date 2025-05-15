@@ -1,7 +1,6 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Windows;
-using DeNote.ViewModels;
 using DeNote.Views;
 
 namespace DeNote
@@ -11,17 +10,11 @@ namespace DeNote
     /// </summary>
     public partial class App : Application
     {
-        private DrawingViewModel _drawingViewModel;
         private OverlayWindow _overlayWindow;
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            _drawingViewModel = new DrawingViewModel();
-
-            //_toolbarWindow = new ToolbarWindow(_drawingViewModel);
-            //_toolbarWindow.Show();
-
-            _overlayWindow = new OverlayWindow(_drawingViewModel);
+            _overlayWindow = new OverlayWindow();
             _overlayWindow.Show();
         }
 

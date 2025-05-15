@@ -15,22 +15,12 @@
         Focusable="False"
         Title="OverlayWindow">
     <Grid>
-        <skia:SKGLElement x:Name="DrawingCanvas" 
-                          IsHitTestVisible="True"
-                          PaintSurface="DrawingCanvas_PaintSurface"
-                          MouseLeftButtonDown="DrawingCanvas_MouseLeftButtonDown"
-                          MouseMove="DrawingCanvas_MouseMove"
-                          MouseLeftButtonUp="DrawingCanvas_MouseLeftButtonUp"
-                          TouchDown="DrawingCanvas_TouchDown"
-                          TouchMove="DrawingCanvas_TouchMove"
-                          TouchUp="DrawingCanvas_TouchUp"
-                          StylusDown="DrawingCanvas_StylusDown"
-                          StylusMove="DrawingCanvas_StylusMove"
-                          StylusUp="DrawingCanvas_StylusUp"/>
+        <local:QIDrawingCanvasControl x:Name="DrawingCanvas" Panel.ZIndex="0"/>
         <Border Visibility="{Binding ToolBarVisibility}"
                 BorderBrush="#AAFFFFFF" BorderThickness="0.5" CornerRadius="36" 
                 Background="#50443F" Opacity="0.9"
                 HorizontalAlignment="Right" VerticalAlignment="Top"
+                Panel.ZIndex="10"
                 Margin="10">
             <ToolBarTray x:Name="DrawingToolbar"
                          Background="Transparent"
@@ -74,7 +64,16 @@
                         <TextBlock Text="↪" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </ui:Button>
                     <Separator Opacity="0.2" />
-                    <local:DrawingAttributeControl DataContext="{Binding}" />
+                    <ui:Button x:Name="ThicknessBtn" Click="ThicknessBtn_Click" 
+                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
+                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
+                        <TextBlock Text="✒️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ui:Button>
+                    <ui:Button x:Name="ColorPickerBtn" Click="ColorPickerBtn_Click" 
+                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange"
+                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
+                        <Ellipse x:Name="ColorPreviewCircle" Stroke="#C0FFFFFF" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ui:Button>
                     <Separator Opacity="0.2" />
                     <ui:Button x:Name="RecordBtn" Click="RecordBtn_Click" 
                                BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
@@ -86,7 +85,18 @@
                                HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
                         <TextBlock Text="📸" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </ui:Button>
-                    <ui:Button x:Name="CloseBtn" Click="CloseBtn_Click" Background="IndianRed" Foreground="#C0FFFFFF" 
+                    <ui:Button x:Name="ToggleBackgroundBtn" Click="ToggleBackgroundBtn_Click" 
+                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
+                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
+                        <TextBlock Text="🖼️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ui:Button>
+                    <ui:Button x:Name="SettingBtn" Click="SettingBtn_Click" 
+                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
+                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
+                        <TextBlock Text="ℹ️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ui:Button>
+                    <ui:Button x:Name="CloseBtn" Click="CloseBtn_Click"
+                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF" 
                                HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
                         <TextBlock Text="❌" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </ui:Button>
@@ -102,5 +112,60 @@
                 </ContextMenu>
             </tray:NotifyIcon.Menu>
         </tray:NotifyIcon>
+
+        <Popup x:Name="ShapePickerPopup" PlacementTarget="{Binding ElementName=ShapeBtn}" StaysOpen="False" Placement="Bottom">
+            <Border Background="White" BorderBrush="Black" BorderThickness="1" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="옵션" FontWeight="Bold" FontSize="14"/>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox x:Name="FillOptionCheckBox" Content="채우기" Margin="5" Checked="FillOptionCheckBox_Checked" Unchecked="FillOptionCheckBox_Checked"/>
+                    </StackPanel>
+                    <TextBlock Text="도형 선택" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <!-- 도형 선택 버튼들 -->
+                    <StackPanel x:Name="ShapesPanel" Orientation="Horizontal">
+                        <Button x:Name="RectangleBtn" Content="사각형" Click="ShapeTypeBtn_Click" Tag="Rectangle" Margin="5"/>
+                        <Button x:Name="EllipseBtn" Content="원" Click="ShapeTypeBtn_Click" Tag="Ellipse" Margin="5"/>
+                        <Button x:Name="TriangleBtn" Content="삼각형" Click="ShapeTypeBtn_Click" Tag="Triangle" Margin="5"/>
+                        <Button x:Name="LineBtn" Content="선" Click="ShapeTypeBtn_Click" Tag="Line" Margin="5"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <Popup x:Name="ThicknessPopup" PlacementTarget="{Binding ElementName=ThicknessBtn}" StaysOpen="False" Placement="Bottom">
+            <Border Background="White" BorderBrush="Black" BorderThickness="1" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="두께" FontWeight="Bold" FontSize="14" TextAlignment="Center"/>
+                    <StackPanel Orientation="Vertical">
+                        <Slider x:Name="ThicknessSlider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="1" Maximum="20" TickFrequency="1" ValueChanged="ThicknessSlider_ValueChanged" IsSnapToTickEnabled="True" Margin="5"/>
+                        <TextBlock x:Name="ThicknessValueText" Text="{Binding ElementName=ThicknessSlider, Path=Value, StringFormat={}{0}}" TextAlignment="Center" HorizontalAlignment="Center" Width="40"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <Popup x:Name="ColorPickerPopup" PlacementTarget="{Binding ElementName=ColorPickerBtn}" StaysOpen="False" Placement="Bottom">
+            <Border Background="White" BorderBrush="Black" BorderThickness="1" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="색상 선택" FontWeight="Bold" FontSize="14"/>
+                    <UniformGrid Columns="4">
+                        <Button x:Name="RedBtn" Background="Red" Click="ColorBtn_Click" Tag="Red" Margin="5"/>
+                        <Button x:Name="GreenBtn" Background="Green" Click="ColorBtn_Click" Tag="Green" Margin="5"/>
+                        <Button x:Name="BlueBtn" Background="Blue" Click="ColorBtn_Click" Tag="Blue" Margin="5"/>
+                        <Button x:Name="YellowBtn" Background="Yellow" Click="ColorBtn_Click" Tag="Yellow" Margin="5"/>
+                        <Button x:Name="CyanBtn" Background="Cyan" Click="ColorBtn_Click" Tag="Cyan" Margin="5"/>
+                        <Button x:Name="MagentaBtn" Background="Magenta" Click="ColorBtn_Click" Tag="Magenta" Margin="5"/>
+                        <Button x:Name="BlackBtn" Background="Black" Click="ColorBtn_Click" Tag="Black" Margin="5"/>
+                        <Button x:Name="WhiteBtn" Background="White" Click="ColorBtn_Click" Tag="White" Margin="5"/>
+                        <Button x:Name="GrayBtn" Background="Gray" Click="ColorBtn_Click" Tag="Gray" Margin="5"/>
+                        <Button x:Name="OrangeBtn" Background="Orange" Click="ColorBtn_Click" Tag="Orange" Margin="5"/>
+                        <Button x:Name="PinkBtn" Background="Pink" Click="ColorBtn_Click" Tag="Pink" Margin="5"/>
+                        <Button x:Name="PurpleBtn" Background="Purple" Click="ColorBtn_Click" Tag="Purple" Margin="5"/>
+                        <Button x:Name="BrownBtn" Background="Brown" Click="ColorBtn_Click" Tag="Brown" Margin="5"/>
+                        <Button x:Name="LimeBtn" Background="Lime" Click="ColorBtn_Click" Tag="Lime" Margin="5"/>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+        </Popup>
     </Grid>
 </Window>
