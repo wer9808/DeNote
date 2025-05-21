@@ -139,16 +139,6 @@ namespace DeNote.Models.Drawing
 
         public void CachePath()
         {
-            var cachePath = new SKPath();
-
-            UpdateMeshs();
-
-            for (int i = 0; i < Meshs.Count; i++)
-            {
-                var mesh = Meshs[i];
-                cachePath.AddPath(mesh);
-            }
-
             Path.FillType = SKPathFillType.Winding;
             IsPathCached = true;
         }
