@@ -70,6 +70,8 @@ namespace DeNote.Services
 
         public bool ShouldCacheObject(QIDrawingObject obj)
         {
+            if (!obj.BitmapCacheOption) return false;
+
             // 스트로크 객체인 경우
             if (obj is QIPenStroke stroke)
             {

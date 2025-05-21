@@ -15,8 +15,6 @@ namespace DeNote.Utils
         public static float DefaultAngleThreshold { get; set; } = 10.0f; // 각도 변화 임계값 (각도 변화가 작으면 중간 포인트 제거)
         public static float DefaultPressureThreshold { get; set; } = 0.05f; // 필압 변화 임계값
 
-
-
         public static void OptimizePoints(QIStrokeObject strokeObject)
         {
             // 스트로크 최적화 로직

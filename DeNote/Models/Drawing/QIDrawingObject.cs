@@ -1,4 +1,7 @@
-﻿using System;
+﻿using DeNote.Utils;
+using SkiaSharp;
+using SkiaSharp.Views.WPF;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -10,8 +13,7 @@ using System.Windows.Ink;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using SkiaSharp;
-using SkiaSharp.Views.WPF;
+using static OpenTK.Graphics.OpenGL.GL;
 using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
@@ -30,7 +32,8 @@ namespace DeNote.Models.Drawing
         public Vector Scale { get; set; } = new Vector(1, 1); // Scale factor for the object (X and Y scale)
 
         public bool IsDirty { get; set; } = true; // Indicates if the object has been modified since last render
-        public bool PathCacheOption { get; set; } = true; // Indicates if the path should be cached for performance optimization
+        public bool IsPathCached { get; set; } = false; // Indicates if the path is cached for performance optimization
+        public List<SKPath> Meshs { get; set; } = new List<SKPath>(); // List of paths for mesh rendering
         public SKPath Path { get; set; } = new SKPath(); // Path for the object (used for drawing shapes)
         public SKRect Bounds => Path.ComputeTightBounds(); // Bounding box of the object
 
@@ -100,108 +103,150 @@ namespace DeNote.Models.Drawing
             StrokeCap = SKStrokeCap.Round;
             StrokeJoin = SKStrokeJoin.Round;
             StrokeWidth = 4.0f;
-            PathCacheOption = true;
-            BitmapCacheOption = true;
+            BitmapCacheOption = false;
         }
 
         public override void Render(SKCanvas canvas)
         {
-            if (PressureOption)
+            if (!IsPathCached)
             {
-                RenderVariableWidthPath(canvas);
+                foreach (var mesh in Meshs)
+                {
+                    using (var paint = new SKPaint())
+                    {
+                        paint.Color = StrokeColor;
+                        paint.StrokeWidth = StrokeWidth;
+                        paint.StrokeCap = StrokeCap;
+                        paint.StrokeJoin = StrokeJoin;
+                        paint.Style = SKPaintStyle.Fill;
+                        canvas.DrawPath(mesh, paint);
+                    }
+                }
             }
             else
             {
-                if (PathCacheOption && Path.IsEmpty)
-                {
-                    Path = new SKPath();
-                    Path.MoveTo((float)Position.X, (float)Position.Y);
-                    foreach (var point in Points)
-                    {
-                        Path.LineTo((float)point.X, (float)point.Y);
-                    }
-                }
-
                 using (var paint = new SKPaint())
                 {
                     paint.Color = StrokeColor;
                     paint.StrokeWidth = StrokeWidth;
                     paint.StrokeCap = StrokeCap;
                     paint.StrokeJoin = StrokeJoin;
-                    paint.Style = SKPaintStyle.Stroke;
+                    paint.Style = SKPaintStyle.Fill;
                     canvas.DrawPath(Path, paint);
                 }
             }
-
         }
 
-        // 필압을 고려한 가변 두께 경로 렌더링
-        private void RenderVariableWidthPath(SKCanvas canvas)
+        public void CachePath()
         {
-            if (Points.Count < 2)
-                return;
+            var cachePath = new SKPath();
 
-            for (int i = 0; i < Points.Count - 1; i++)
+            UpdateMeshs();
+
+            for (int i = 0; i < Meshs.Count; i++)
             {
-                var p1 = Points[i];
-                var p2 = Points[i + 1];
+                var mesh = Meshs[i];
+                cachePath.AddPath(mesh);
+            }
 
-                // 필압에 기반한 두께 계산
-                float width1 = StrokeWidth * p1.Pressure;
-                float width2 = StrokeWidth * p2.Pressure;
+            Path.FillType = SKPathFillType.Winding;
+            IsPathCached = true;
+        }
 
-                // 두 점 사이의 거리 계산
-                float dx = p2.X - p1.X;
-                float dy = p2.Y - p1.Y;
-                float distance = (float)Math.Sqrt(dx * dx + dy * dy);
-
-                if (distance < 0.01f)
-                    continue;
-
-                // 두 점 사이의 단위 벡터 계산
-                float nx = -dy / distance;
-                float ny = dx / distance;
-
-                // 두께에 따른 오프셋 계산
-                float offset1 = width1 / 2;
-                float offset2 = width2 / 2;
-
-                // 사다리꼴 형태로 경로 만들기
-                var path = new SKPath();
-                path.MoveTo(p1.X + nx * offset1, p1.Y + ny * offset1);
-                path.LineTo(p2.X + nx * offset2, p2.Y + ny * offset2);
-                path.LineTo(p2.X - nx * offset2, p2.Y - ny * offset2);
-                path.LineTo(p1.X - nx * offset1, p1.Y - ny * offset1);
-                path.Close();
-
-                // 사다리꼴 그리기
-                using (var paint = new SKPaint
-                {
-                    Style = SKPaintStyle.Fill,
-                    Color = StrokeColor,
-                    IsAntialias = true
-                })
-                {
-                    canvas.DrawPath(path, paint);
-                }
-
-                // 곡선 연결 부분에 원 그리기 (부드러운 연결을 위해)
-                if (i > 0)
-                {
-                    using (var paint = new SKPaint
-                    {
-                        Style = SKPaintStyle.Fill,
-                        Color = StrokeColor,
-                        IsAntialias = true
-                    })
-                    {
-                        var radius = Math.Min(offset1, offset2);
-                        canvas.DrawCircle(p1.X, p1.Y, radius, paint);
-                    }
-                }
+        public void AddPoint(QIPoint point)
+        {
+            IsPathCached = false;
+            if (Points.Count == 0)
+            {
+                Points.Add(point);
+                var pointMesh = CreatePointMesh(point);
+                Meshs.Add(pointMesh);
+                Path.AddPath(pointMesh);
+            }
+            else
+            {
+                var lastPoint = Points.Last();
+                if (lastPoint.DistanceTo(point) < 0.01f)
+                    return; // 너무 가까운 점은 무시
+                var connectionMesh = CreateConnectionMesh(lastPoint, point);
+                Meshs.Add(connectionMesh);
+                Path.AddPath(connectionMesh);
+                var pointMesh = CreatePointMesh(point);
+                Meshs.Add(pointMesh);
+                Points.Add(point);
+                Path.AddPath(pointMesh);
             }
         }
 
+        public void UpdateMeshs()
+        {
+            Meshs.Clear();
+            if (Points.Count == 1)
+            {
+                var p0 = Points[0];
+                var mesh = CreatePointMesh(p0);
+                Meshs.Add(mesh);
+                return;
+            }
+
+            for (int i = 0; i < Points.Count - 1; i++)
+            {
+                var p0 = Points[i];
+                var p1 = Points[i + 1];
+                var mesh = CreatePointMesh(p0);
+                Meshs.Add(mesh);
+                mesh = CreateConnectionMesh(p0, p1);
+                Meshs.Add(mesh);
+            }
+            var lastPoint = Points.Last();
+            var lastMesh = CreatePointMesh(lastPoint);
+            Meshs.Add(lastMesh);
+        }
+
+        private SKPath CreateConnectionMesh(QIPoint p1, QIPoint p2)
+        {
+            // 필압에 기반한 두께 계산
+            float width1 = StrokeWidth * p1.Pressure;
+            float width2 = StrokeWidth * p2.Pressure;
+
+            // 두 점 사이의 거리 계산
+            float dx = p2.X - p1.X;
+            float dy = p2.Y - p1.Y;
+            float distance = (float)Math.Sqrt(dx * dx + dy * dy);
+
+            // 두 점 사이의 단위 벡터 계산
+            float nx = -dy / distance;
+            float ny = dx / distance;
+
+            // 두께에 따른 오프셋 계산
+            float offset1 = width1 / 2;
+            float offset2 = width2 / 2;
+
+            // 사다리꼴의 네 꼭짓점 계산
+            SKPoint v_p1_left = new SKPoint(p1.X + nx * offset1, p1.Y + ny * offset1);
+            SKPoint v_p2_left = new SKPoint(p2.X + nx * offset2, p2.Y + ny * offset2);
+            SKPoint v_p1_right = new SKPoint(p1.X - nx * offset1, p1.Y - ny * offset1);
+            SKPoint v_p2_right = new SKPoint(p2.X - nx * offset2, p2.Y - ny * offset2);
+
+            // 시계 방향 (CW)으로 경로 만들기 (Y-down 좌표계 기준)
+            var path = new SKPath();
+            path.MoveTo(v_p1_left);     // 시작점 (p1의 "왼쪽")
+            path.LineTo(v_p1_right);    // p1의 "오른쪽"으로 이동
+            path.LineTo(v_p2_right);    // p2의 "오른쪽"으로 이동
+            path.LineTo(v_p2_left);     // p2의 "왼쪽"으로 이동
+            path.Close();               // 경로 닫기 (v_p2_left에서 v_p1_left로)
+
+            return path;
+        }
+
+        private SKPath CreatePointMesh(QIPoint point)
+        {
+            var path = new SKPath();
+            var radius = StrokeWidth / 2;
+            path.AddCircle(point.X, point.Y, radius);
+            path.Close();
+            return path;
+        }
 
         public override QIDrawingObject Clone()
         {
@@ -213,8 +258,9 @@ namespace DeNote.Models.Drawing
                 Position = Position,
                 Rotation = Rotation,
                 Scale = Scale,
-                PathCacheOption = PathCacheOption,
+                IsPathCached = IsPathCached,
                 Path = Path,
+                Meshs = new List<SKPath>(Meshs),
                 StrokeColor = StrokeColor,
                 BitmapCacheOption = BitmapCacheOption,
                 CachedBitmap = CachedBitmap,
@@ -266,8 +312,9 @@ namespace DeNote.Models.Drawing
                 Position = Position,
                 Rotation = Rotation,
                 Scale = Scale,
-                PathCacheOption = PathCacheOption,
+                IsPathCached = IsPathCached,
                 Path = Path,
+                Meshs = new List<SKPath>(Meshs),
                 StrokeColor = StrokeColor,
                 BitmapCacheOption = BitmapCacheOption,
                 CachedBitmap = CachedBitmap,
@@ -334,8 +381,9 @@ namespace DeNote.Models.Drawing
                 Position = Position,
                 Rotation = Rotation,
                 Scale = Scale,
-                PathCacheOption = PathCacheOption,
+                IsPathCached = IsPathCached,
                 Path = Path,
+                Meshs = new List<SKPath>(Meshs),
                 StrokeColor = StrokeColor,
                 BitmapCacheOption = BitmapCacheOption,
                 CachedBitmap = CachedBitmap,

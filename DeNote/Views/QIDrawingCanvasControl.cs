@@ -27,7 +27,7 @@ namespace DeNote.Views
         SolidColor
     }
 
-    public class QIDrawingCanvasControl : SKElement
+    public class QIDrawingCanvasControl : SKGLElement
     {
         private float defaultPressure = 1.0f; // 기본 압력 값
 
@@ -59,6 +59,8 @@ namespace DeNote.Views
             drawingContext.VisualInvalidated += (s, e) => InvalidateVisual();
             toolManager.ToolChanged += OnToolChanged;
             drawingContext.ObjectAdded += OnObjectAdded;
+
+            PaintSurface += OnPaintSurface;
         }
 
         private async void QIDrawingCanvasControl_Loaded(object sender, RoutedEventArgs e)
@@ -71,7 +73,7 @@ namespace DeNote.Views
             _backgroundBitmap?.Dispose();
         }
 
-        protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+        protected void OnPaintSurface(SKPaintSurfaceEventArgs e)
         {
             SKCanvas canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
@@ -84,7 +86,6 @@ namespace DeNote.Views
                     // SKBitmap을 캔버스 크기에 맞게 그리기
                     SKRect destRect = new SKRect(0, 0, e.Info.Width, e.Info.Height);
                     canvas.DrawBitmap(_backgroundBitmap, destRect);
-                    Debug.WriteLine($"Background capture");
                 }
             }
             else
