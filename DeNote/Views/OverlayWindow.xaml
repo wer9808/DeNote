@@ -46,12 +46,17 @@
                                    HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
                             <TextBlock Text="🔶" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </ui:Button>
+                        <ui:Button x:Name="EraserBtn" Click="EraserBtn_Click"  
+                                   BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
+                                   HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
+                            <TextBlock Text="❇️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </ui:Button>
                     </StackPanel>
                     <Separator Opacity="0.2" />
                     <ui:Button x:Name="ClearDrawingBtn" Click="ClearDrawingBtn_Click" HorizontalAlignment="Stretch" 
                                BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
                            CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="❇️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="✨" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </ui:Button>
                     <ui:Button x:Name="UndoBtn" Click="UndoBtn_Click" 
                                BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"

@@ -61,13 +61,13 @@ namespace DeNote.Views
             this.Loaded += OverlayWindow_Loaded;
             this.Closing += OverlayWindow_Closing;
             this.Activated += OverlayWindow_Activated;
+
+            UpdateColorPreview();
+            UpdateToolButtonStates();
         }
 
         private void OverlayWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            UpdateColorPreview();
-            UpdateToolButtonStates();
-
             // 창 핸들 가져오기
             _windowHandle = new WindowInteropHelper(this).Handle;
             _source = HwndSource.FromHwnd(_windowHandle);
@@ -252,6 +252,13 @@ namespace DeNote.Views
             }
         }
 
+        private void EraserBtn_Click(object sender, RoutedEventArgs e)
+        {
+            DrawingCanvas.ChangeTool(QIDrawingToolType.Eraser);
+            UpdateColorPreview();
+            UpdateToolButtonStates();
+        }
+
 
         private void UpdateToolButtonStates()
         {
@@ -259,6 +266,7 @@ namespace DeNote.Views
             PenBtn.Background = Brushes.Transparent;
             HighlighterBtn.Background = Brushes.Transparent;
             ShapeBtn.Background = Brushes.Transparent;
+            EraserBtn.Background = Brushes.Transparent;
 
             var toolType = DrawingCanvas.GetCurrentToolType();
             var selectedColor = Brushes.Orange;
@@ -274,6 +282,9 @@ namespace DeNote.Views
                     break;
                 case QIDrawingToolType.Shape:
                     ShapeBtn.Background = selectedColor;
+                    break;
+                case QIDrawingToolType.Eraser:
+                    EraserBtn.Background = selectedColor;
                     break;
             }
         }
@@ -371,10 +382,20 @@ namespace DeNote.Views
                 var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
                 ColorPreviewCircle.Fill = new SolidColorBrush(Color.FromArgb(settings.Color.Alpha, settings.Color.Red, settings.Color.Green, settings.Color.Blue));
             }
+            else if (toolType == QIDrawingToolType.Eraser)
+            {
+                ColorPreviewCircle.Fill = new SolidColorBrush(Colors.Transparent);
+            }
         }
 
         private void ColorPickerBtn_Click(object sender, RoutedEventArgs e)
         {
+            var toolType = DrawingCanvas.GetCurrentToolType();
+            if (toolType == QIDrawingToolType.Eraser)
+            {
+                ColorPickerPopup.IsOpen = false;
+                return;
+            }
             ColorPickerPopup.IsOpen = !ColorPickerPopup.IsOpen;
         }
 
@@ -461,6 +482,5 @@ namespace DeNote.Views
         {
             await DrawingCanvas.ToggleBackgroundOption();
         }
-
     }
 }

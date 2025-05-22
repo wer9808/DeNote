@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SkiaSharp;
 
 namespace DeNote.Models.Drawing
 {
@@ -91,11 +92,58 @@ namespace DeNote.Models.Drawing
         }
     }
 
+    public class EraseCommand : QIDrawingCommand
+    {
+
+        private readonly QIDrawingContext context;
+        private QIDrawingObject original;
+        private int originalIndex;
+        private QIDrawingObject target;
+        private SKPath eraserPath;
+
+        public EraseCommand(QIDrawingContext context, QIDrawingObject original, SKPath eraserPath)
+        {
+            this.context = context;
+            this.original = original;
+            this.eraserPath = eraserPath;
+        }
+
+        public void Execute()
+        {
+            this.originalIndex = context.Objects.IndexOf(original);
+            this.target = original.Clone();
+            target.Erase(eraserPath);
+            if (target.IsEmpty)
+            {
+                context.Objects.Remove(original);
+            }
+            else
+            {
+                context.Objects[originalIndex] = target;
+            }
+        }
+
+        public void Undo()
+        {
+            var targetIndex = context.Objects.IndexOf(target);
+            if (targetIndex >= 0)
+            {
+                context.Objects[targetIndex] = original;
+                originalIndex = targetIndex;
+            }
+            else
+            {
+                context.Objects.Insert(originalIndex, original);
+            }
+        }
+    }
+
     // 복합 명령 (여러 명령을 하나로 묶음)
     public class CompositeCommand : QIDrawingCommand
     {
         private readonly List<QIDrawingCommand> commands = new List<QIDrawingCommand>();
         private readonly QIDrawingContext context;
+        public int Count => commands.Count;
 
         public CompositeCommand(QIDrawingContext context)
         {

@@ -122,7 +122,6 @@ namespace DeNote.Models.Drawing
             // QIDrawingPathUtils.OptimizePoints(stroke);
 
             // 최종 경로 생성
-            stroke.CachePath();
         }
 
         public void ApplySettings(QIDrawingToolSettings settings)
@@ -316,46 +315,47 @@ namespace DeNote.Models.Drawing
 
         private void UpdateShapePath()
         {
-            CurrentShape.Path = new SKPath();
+            var shapePath = new SKPath();
 
             switch (Settings.Type)
             {
                 case QIShapeType.Rectangle:
-                    CurrentShape.Path.AddRect(SKRect.Create(
+                    shapePath.AddRect(SKRect.Create(
                         Math.Min(StartPoint.X, EndPoint.X),
                         Math.Min(StartPoint.Y, EndPoint.Y),
                         Math.Abs(EndPoint.X - StartPoint.X),
                         Math.Abs(EndPoint.Y - StartPoint.Y)));
-                    CurrentShape.Path.Close();
+                    shapePath.Close();
                     break;
 
                 case QIShapeType.Ellipse:
-                    CurrentShape.Path.AddOval(SKRect.Create(
+                    shapePath.AddOval(SKRect.Create(
                         Math.Min(StartPoint.X, EndPoint.X),
                         Math.Min(StartPoint.Y, EndPoint.Y),
                         Math.Abs(EndPoint.X - StartPoint.X),
                         Math.Abs(EndPoint.Y - StartPoint.Y)));
-                    CurrentShape.Path.Close();
+                    shapePath.Close();
                     break;
                 case QIShapeType.Triangle:
                     // 삼각형 경로 생성
-                    CurrentShape.Path.MoveTo(
+                    shapePath.MoveTo(
                         (StartPoint.X + EndPoint.X) / 2,
                         Math.Min(StartPoint.Y, EndPoint.Y));
-                    CurrentShape.Path.LineTo(
+                    shapePath.LineTo(
                         Math.Min(StartPoint.X, EndPoint.X),
                         Math.Max(StartPoint.Y, EndPoint.Y));
-                    CurrentShape.Path.LineTo(
+                    shapePath.LineTo(
                         Math.Max(StartPoint.X, EndPoint.X),
                         Math.Max(StartPoint.Y, EndPoint.Y));
-                    CurrentShape.Path.Close();
+                    shapePath.Close();
                     break;
                 case QIShapeType.Line:
-                    CurrentShape.Path.MoveTo(StartPoint);
-                    CurrentShape.Path.LineTo(EndPoint);
+                    shapePath.MoveTo(StartPoint);
+                    shapePath.LineTo(EndPoint);
                     break;
             }
-            
+
+            CurrentShape.UpdatePath(shapePath);
         }
 
         public void ApplySettings(QIDrawingToolSettings settings)
@@ -363,6 +363,53 @@ namespace DeNote.Models.Drawing
             if (settings is QIShapeToolSettings shapeSettings)
             {
                 Settings = shapeSettings;
+            }
+        }
+
+        public QIDrawingToolSettings GetSettings()
+        {
+            return Settings.Clone();
+        }
+    }
+
+    public class QIEraserTool : IQIDrawingTool
+    {
+        public QIDrawingToolType Type => QIDrawingToolType.Eraser;
+        private QIEraseToolSettings Settings { get; set; } = new QIEraseToolSettings();
+
+        public QIDrawingObject CreateDrawingObject()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void HandleInput(QIDrawingInputData input, QIDrawingContext context)
+        {
+            var point = new QIPoint
+            {
+                X = input.X,
+                Y = input.Y,
+                Pressure = input.Pressure,
+            };
+
+            switch (input.Type)
+            {
+                case QIDrawingInputType.Down:
+                    context.StartErasing(point, Settings.StrokeWidth);
+                    break;
+                case QIDrawingInputType.Move:
+                    context.UpdateErasing(point);
+                    break;
+                case QIDrawingInputType.Up:
+                    context.EndErasing();
+                    break;
+            }
+        }
+
+        public void ApplySettings(QIDrawingToolSettings settings)
+        {
+            if (settings is QIEraseToolSettings eraseToolSettings)
+            {
+                Settings = eraseToolSettings;
             }
         }
 

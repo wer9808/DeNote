@@ -33,7 +33,6 @@ namespace DeNote.Models.Drawing
 
         public bool IsDirty { get; set; } = true; // Indicates if the object has been modified since last render
         public bool IsPathCached { get; set; } = false; // Indicates if the path is cached for performance optimization
-        public List<SKPath> Meshs { get; set; } = new List<SKPath>(); // List of paths for mesh rendering
         public SKPath Path { get; set; } = new SKPath(); // Path for the object (used for drawing shapes)
         public SKRect Bounds => Path.ComputeTightBounds(); // Bounding box of the object
 
@@ -46,6 +45,13 @@ namespace DeNote.Models.Drawing
 
         public abstract void Render(SKCanvas canvas); // Method to render the object on the canvas
         public abstract QIDrawingObject Clone(); // Method to create a copy of the object
+
+        public virtual void Erase(SKPath eraserPath)
+        {
+            Path = Path.Op(eraserPath, SKPathOp.Difference);
+        }
+
+        public virtual bool IsEmpty => Path == null || Path.IsEmpty;
     }
 
     public class QIPoint
@@ -108,39 +114,16 @@ namespace DeNote.Models.Drawing
 
         public override void Render(SKCanvas canvas)
         {
-            if (!IsPathCached)
-            {
-                foreach (var mesh in Meshs)
-                {
-                    using (var paint = new SKPaint())
-                    {
-                        paint.Color = StrokeColor;
-                        paint.StrokeWidth = StrokeWidth;
-                        paint.StrokeCap = StrokeCap;
-                        paint.StrokeJoin = StrokeJoin;
-                        paint.Style = SKPaintStyle.Fill;
-                        canvas.DrawPath(mesh, paint);
-                    }
-                }
-            }
-            else
-            {
-                using (var paint = new SKPaint())
-                {
-                    paint.Color = StrokeColor;
-                    paint.StrokeWidth = StrokeWidth;
-                    paint.StrokeCap = StrokeCap;
-                    paint.StrokeJoin = StrokeJoin;
-                    paint.Style = SKPaintStyle.Fill;
-                    canvas.DrawPath(Path, paint);
-                }
-            }
-        }
-
-        public void CachePath()
-        {
             Path.FillType = SKPathFillType.Winding;
-            IsPathCached = true;
+            using (var paint = new SKPaint())
+            {
+                paint.Color = StrokeColor;
+                paint.StrokeWidth = StrokeWidth;
+                paint.StrokeCap = StrokeCap;
+                paint.StrokeJoin = StrokeJoin;
+                paint.Style = SKPaintStyle.Fill;
+                canvas.DrawPath(Path, paint);
+            }
         }
 
         public void AddPoint(QIPoint point)
@@ -150,7 +133,6 @@ namespace DeNote.Models.Drawing
             {
                 Points.Add(point);
                 var pointMesh = CreatePointMesh(point);
-                Meshs.Add(pointMesh);
                 Path.AddPath(pointMesh);
             }
             else
@@ -159,38 +141,37 @@ namespace DeNote.Models.Drawing
                 if (lastPoint.DistanceTo(point) < 0.01f)
                     return; // 너무 가까운 점은 무시
                 var connectionMesh = CreateConnectionMesh(lastPoint, point);
-                Meshs.Add(connectionMesh);
                 Path.AddPath(connectionMesh);
                 var pointMesh = CreatePointMesh(point);
-                Meshs.Add(pointMesh);
                 Points.Add(point);
                 Path.AddPath(pointMesh);
             }
         }
 
-        public void UpdateMeshs()
+        public void UpdatePath()
         {
-            Meshs.Clear();
-            if (Points.Count == 1)
+            var path = new SKPath();
+            if (Points.Count == 0)
             {
-                var p0 = Points[0];
-                var mesh = CreatePointMesh(p0);
-                Meshs.Add(mesh);
+                Path = path;
                 return;
             }
+
+            var firstPoint = Points.First();
+            var firstMesh = CreatePointMesh(firstPoint);
+            Path.AddPath(firstMesh);
 
             for (int i = 0; i < Points.Count - 1; i++)
             {
                 var p0 = Points[i];
                 var p1 = Points[i + 1];
-                var mesh = CreatePointMesh(p0);
-                Meshs.Add(mesh);
-                mesh = CreateConnectionMesh(p0, p1);
-                Meshs.Add(mesh);
+                var mesh = CreateConnectionMesh(p0, p1);
+                path.AddPath(mesh);
+                mesh = CreatePointMesh(p0);
+                path.AddPath(mesh);
             }
-            var lastPoint = Points.Last();
-            var lastMesh = CreatePointMesh(lastPoint);
-            Meshs.Add(lastMesh);
+
+            Path = path;
         }
 
         private SKPath CreateConnectionMesh(QIPoint p1, QIPoint p2)
@@ -232,10 +213,18 @@ namespace DeNote.Models.Drawing
         private SKPath CreatePointMesh(QIPoint point)
         {
             var path = new SKPath();
-            var radius = StrokeWidth / 2;
+
+            float width = StrokeWidth * point.Pressure;
+            var radius = width / 2;
+
             path.AddCircle(point.X, point.Y, radius);
             path.Close();
             return path;
+        }
+
+        public override void Erase(SKPath eraserPath)
+        {
+            base.Erase(eraserPath);
         }
 
         public override QIDrawingObject Clone()
@@ -250,7 +239,6 @@ namespace DeNote.Models.Drawing
                 Scale = Scale,
                 IsPathCached = IsPathCached,
                 Path = Path,
-                Meshs = new List<SKPath>(Meshs),
                 StrokeColor = StrokeColor,
                 BitmapCacheOption = BitmapCacheOption,
                 CachedBitmap = CachedBitmap,
@@ -304,7 +292,6 @@ namespace DeNote.Models.Drawing
                 Scale = Scale,
                 IsPathCached = IsPathCached,
                 Path = Path,
-                Meshs = new List<SKPath>(Meshs),
                 StrokeColor = StrokeColor,
                 BitmapCacheOption = BitmapCacheOption,
                 CachedBitmap = CachedBitmap,
@@ -336,29 +323,14 @@ namespace DeNote.Models.Drawing
 
         public override void Render(SKCanvas canvas)
         {
-            // 채우기 먼저 (있는 경우)
-            if (FillOption)
-            {
-                using var fillPaint = new SKPaint
-                {
-                    Color = FillColor,
-                    IsAntialias = true,
-                    Style = SKPaintStyle.Fill
-                };
-
-                canvas.DrawPath(Path, fillPaint);
-            }
-
-            // 테두리
-            using var strokePaint = new SKPaint
+            using var paint = new SKPaint
             {
                 Color = StrokeColor,
                 StrokeWidth = StrokeWidth,
                 IsAntialias = true,
-                Style = SKPaintStyle.Stroke
+                Style = FillOption ? SKPaintStyle.StrokeAndFill : SKPaintStyle.Stroke
             };
-
-            canvas.DrawPath(Path, strokePaint);
+            canvas.DrawPath(Path, paint);
         }
 
         public override QIDrawingObject Clone()
@@ -373,7 +345,6 @@ namespace DeNote.Models.Drawing
                 Scale = Scale,
                 IsPathCached = IsPathCached,
                 Path = Path,
-                Meshs = new List<SKPath>(Meshs),
                 StrokeColor = StrokeColor,
                 BitmapCacheOption = BitmapCacheOption,
                 CachedBitmap = CachedBitmap,
@@ -384,6 +355,17 @@ namespace DeNote.Models.Drawing
             };
         }
 
+        internal void UpdatePath(SKPath shapePath)
+        {
+            using var paint = new SKPaint
+            {
+                Color = StrokeColor,
+                StrokeWidth = StrokeWidth,
+                IsAntialias = true,
+                Style = FillOption ? SKPaintStyle.StrokeAndFill : SKPaintStyle.Stroke
+            };
+            Path = paint.GetFillPath(shapePath);
+        }
     }
 
 }

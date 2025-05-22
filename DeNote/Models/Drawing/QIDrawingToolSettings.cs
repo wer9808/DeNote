@@ -91,7 +91,18 @@ namespace DeNote.Models
         }
 
 
+        public class QIEraseToolSettings : QIDrawingToolSettings
+        {
+            public float StrokeWidth { get; set; } = 10.0f;
 
+            public override QIDrawingToolSettings Clone()
+            {
+                return new QIEraseToolSettings
+                {
+                    StrokeWidth = StrokeWidth,
+                };
+            }
+        }
     }
 
 }

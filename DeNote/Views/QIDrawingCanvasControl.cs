@@ -41,12 +41,16 @@ namespace DeNote.Views
 
         private SKColor backgroundColor = SKColors.White;
 
-        private QIDrawingContext drawingContext = new QIDrawingContext();
+        private QIDrawingContext drawingContext;
         private QIToolManager toolManager;
         private QIDrawingRenderer renderer = new QIDrawingRenderer();
 
         public QIDrawingCanvasControl()
         {
+            float primaryScreenWidth = (float)SystemParameters.PrimaryScreenWidth;
+            float primaryScreenHeight = (float)SystemParameters.PrimaryScreenHeight;
+
+            drawingContext = new QIDrawingContext(primaryScreenWidth, primaryScreenHeight);
             toolManager = new QIToolManager(drawingContext);
 
             _captureService = new ScreenCaptureService();
@@ -78,19 +82,28 @@ namespace DeNote.Views
             SKCanvas canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
 
+            float primaryScreenWidth = (float)SystemParameters.PrimaryScreenWidth;
+            float primaryScreenHeight = (float)SystemParameters.PrimaryScreenHeight;
+            SKRect destRect = new SKRect(0, 0, primaryScreenWidth, primaryScreenHeight);
+
             if (backgroundOption == BackgroundOption.Capture)
             {
                 // 배경 그리기 (배경이 있는 경우)
                 if (_backgroundBitmap != null)
                 {
                     // SKBitmap을 캔버스 크기에 맞게 그리기
-                    SKRect destRect = new SKRect(0, 0, e.Info.Width, e.Info.Height);
                     canvas.DrawBitmap(_backgroundBitmap, destRect);
                 }
             }
             else
             {
                 canvas.Clear(backgroundColor);
+            }
+
+            if (drawingContext.IsErasing)
+            {
+                canvas.DrawBitmap(drawingContext.EraserBitmap, destRect);
+                return;
             }
 
             // 완성된 객체 렌더링
@@ -111,19 +124,28 @@ namespace DeNote.Views
             SKCanvas canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
 
+            float primaryScreenWidth = (float)SystemParameters.PrimaryScreenWidth;
+            float primaryScreenHeight = (float)SystemParameters.PrimaryScreenHeight;
+            SKRect destRect = new SKRect(0, 0, primaryScreenWidth, primaryScreenHeight);
+
             if (backgroundOption == BackgroundOption.Capture)
             {
                 // 배경 그리기 (배경이 있는 경우)
                 if (_backgroundBitmap != null)
                 {
                     // SKBitmap을 캔버스 크기에 맞게 그리기
-                    SKRect destRect = new SKRect(0, 0, e.Info.Width, e.Info.Height);
                     canvas.DrawBitmap(_backgroundBitmap, destRect);
                 }
             }
             else
             {
                 canvas.Clear(backgroundColor);
+            }
+
+            if (drawingContext.IsErasing)
+            {
+                canvas.DrawBitmap(drawingContext.EraserBitmap, destRect);
+                return;
             }
 
             // 완성된 객체 렌더링
@@ -397,19 +419,29 @@ namespace DeNote.Views
             if (points.Count == 0)
                 return;
 
-            foreach (var point in points)
+            int i = 0;
+            var point = points[i];
+            var input = new QIDrawingInputData
             {
-                var input = new QIDrawingInputData
+                Type = QIDrawingInputType.Down,
+                X = (float)point.X,
+                Y = (float)point.Y,
+                Pressure = point.PressureFactor
+            };
+            toolManager.HandleInput(input);
+
+            for (i = 1; i < points.Count; i++)
+            {
+                point = points[i];
+                input = new QIDrawingInputData
                 {
-                    Type = QIDrawingInputType.Down,
+                    Type = QIDrawingInputType.Move,
                     X = (float)point.X,
                     Y = (float)point.Y,
                     Pressure = point.PressureFactor
                 };
-
                 toolManager.HandleInput(input);
             }
-
 
             e.Handled = true;
         }
@@ -441,11 +473,13 @@ namespace DeNote.Views
             if (points.Count == 0)
                 return;
 
-            foreach (var point in points)
+            int i;
+            for (i = 0; i < points.Count; i++)
             {
+                var point = points[i];
                 var input = new QIDrawingInputData
                 {
-                    Type = QIDrawingInputType.Up,
+                    Type = QIDrawingInputType.Move,
                     X = (float)point.X,
                     Y = (float)point.Y,
                     Pressure = point.PressureFactor
@@ -453,6 +487,17 @@ namespace DeNote.Views
 
                 toolManager.HandleInput(input);
             }
+
+            var lastPoint = points.Last();
+            var endInput = new QIDrawingInputData
+            {
+                Type = QIDrawingInputType.Up,
+                X = (float)lastPoint.X,
+                Y = (float)lastPoint.Y,
+                Pressure = lastPoint.PressureFactor
+            };
+
+            toolManager.HandleInput(endInput);
 
             e.Handled = true;
         }
