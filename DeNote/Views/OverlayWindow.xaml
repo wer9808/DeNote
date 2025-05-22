@@ -142,7 +142,7 @@
                 <StackPanel>
                     <TextBlock Text="두께" FontWeight="Bold" FontSize="14" TextAlignment="Center"/>
                     <StackPanel Orientation="Vertical">
-                        <Slider x:Name="ThicknessSlider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="1" Maximum="20" TickFrequency="1" ValueChanged="ThicknessSlider_ValueChanged" IsSnapToTickEnabled="True" Margin="5"/>
+                        <Slider x:Name="ThicknessSlider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="1" Maximum="20" TickFrequency="1" ValueChanged="ThicknessSlider_ValueChanged" Value="5" IsSnapToTickEnabled="True" Margin="5"/>
                         <TextBlock x:Name="ThicknessValueText" Text="{Binding ElementName=ThicknessSlider, Path=Value, StringFormat={}{0}}" TextAlignment="Center" HorizontalAlignment="Center" Width="40"/>
                     </StackPanel>
                 </StackPanel>

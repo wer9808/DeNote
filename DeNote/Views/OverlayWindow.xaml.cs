@@ -417,6 +417,11 @@ namespace DeNote.Views
                 var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
                 ThicknessSlider.Value = settings.StrokeWidth;
             }
+            else if (toolType == QIDrawingToolType.Eraser)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIEraserToolSettings;
+                ThicknessSlider.Value = settings.StrokeWidth;
+            }
 
             ThicknessPopup.IsOpen = !ThicknessPopup.IsOpen;
         }
@@ -473,6 +478,12 @@ namespace DeNote.Views
             else if (toolType == QIDrawingToolType.Shape)
             {
                 var settings = DrawingCanvas.GetCurrentToolSettings() as QIShapeToolSettings;
+                settings.StrokeWidth = (float)e.NewValue;
+                DrawingCanvas.UpdateToolSettings(settings);
+            }
+            else if (toolType == QIDrawingToolType.Eraser)
+            {
+                var settings = DrawingCanvas.GetCurrentToolSettings() as QIEraserToolSettings;
                 settings.StrokeWidth = (float)e.NewValue;
                 DrawingCanvas.UpdateToolSettings(settings);
             }

@@ -110,6 +110,11 @@ namespace DeNote.Models.Drawing
 
         public void Execute()
         {
+            var sameObject = context.Objects.FirstOrDefault(o => o.Id == original.Id);
+            if (sameObject != null)
+            {
+                original = sameObject;
+            }
             this.originalIndex = context.Objects.IndexOf(original);
             this.target = original.Clone();
             target.Erase(eraserPath);

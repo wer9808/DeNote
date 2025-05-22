@@ -43,7 +43,7 @@ namespace DeNote.Services
             _settingsStore[QIDrawingToolType.Pen] = new QIPenToolSettings();
             _settingsStore[QIDrawingToolType.Highlighter] = new QIHighlighterToolSettings();
             _settingsStore[QIDrawingToolType.Shape] = new QIShapeToolSettings();
-            _settingsStore[QIDrawingToolType.Eraser] = new QIEraseToolSettings();
+            _settingsStore[QIDrawingToolType.Eraser] = new QIEraserToolSettings();
 
             // 기본 도구 설정
             SwitchTool(QIDrawingToolType.Pen);

@@ -16,7 +16,7 @@ namespace DeNote.Services
     {
         private readonly LinkedList<QIDrawingCommand> undoList = new LinkedList<QIDrawingCommand>();
         private readonly LinkedList<QIDrawingCommand> redoList = new LinkedList<QIDrawingCommand>();
-        private readonly int maxStackSize = 10;
+        private readonly int maxStackSize = 30;
 
         private readonly QIDrawingContext context;
 

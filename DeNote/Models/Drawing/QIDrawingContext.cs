@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DeNote.Services;
+using DeNote.Utils;
 using SkiaSharp;
 
 namespace DeNote.Models.Drawing
@@ -16,6 +17,7 @@ namespace DeNote.Models.Drawing
         // 명령 관리자 추가
         public QIDrawingCommandManager CommandManager { get; }
         public ObservableCollection<QIDrawingObject> Objects { get; } = new ObservableCollection<QIDrawingObject>();
+        public QIDrawingQuadTree<QIDrawingObject> QuadTree { get; set; }
 
         public bool IsErasing { get; set; } = false;
         public SKBitmap EraserBitmap { get; set; }
@@ -43,14 +45,55 @@ namespace DeNote.Models.Drawing
             this.canvasWidth = canvasWidth;
             this.canvasHeight = canvasHeight;
 
+            QuadTree = new QIDrawingQuadTree<QIDrawingObject>(0, new SKRect(0, 0, canvasWidth, canvasHeight));
+
             CommandManager = new QIDrawingCommandManager(this);
             CommandManager.CommandExecuted += (s, e) => InvalidateVisual();
+
+            this.ObjectAdded += OnObjectAdded;
+            this.ObjectRemoved += OnObjectRemoved;
+            Objects.CollectionChanged += (s, e) =>
+            {
+                if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+                {
+                    if (e.NewItems == null) return;
+                    foreach (QIDrawingObject obj in e.NewItems)
+                    {
+                        ObjectAdded.Invoke(this, new DrawingObjectEventArgs(obj));
+                    }
+                }
+                else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
+                {
+                    if (e.OldItems == null) return;
+                    foreach (QIDrawingObject obj in e.OldItems)
+                    {
+                        ObjectRemoved.Invoke(this, new DrawingObjectEventArgs(obj));
+                    }
+                }
+            };
+        }
+
+        private void OnObjectAdded(object? sender, DrawingObjectEventArgs e)
+        {
+            // 객체가 추가될 때 QuadTree에 추가
+            if (QuadTree != null)
+            {
+                QuadTree.Insert(e.Object);
+            }
+        }
+
+        private void OnObjectRemoved(object? sender, DrawingObjectEventArgs e)
+        {
+            // 객체가 제거될 때 QuadTree에서 제거
+            if (QuadTree != null)
+            {
+                QuadTree.Remove(e.Object);
+            }
         }
 
         public void AddDrawingObject(QIDrawingObject obj)
         {
             CommandManager.AddObject(obj);
-            ObjectAdded?.Invoke(this, new DrawingObjectEventArgs(obj));
         }
 
         public void ClearObjects()
@@ -130,13 +173,14 @@ namespace DeNote.Models.Drawing
             var actualEraserPath = eraserPaint.GetFillPath(eraserPath);
             var eraserBounds = actualEraserPath.ComputeTightBounds();
             var compositeCommand = CommandManager.CreateCompositeCommand();
-            foreach (var obj in Objects)
+
+            // QuadTree를 사용하여 교차하는 객체 찾기
+            var intersectingObjects = QuadTree.Retrieve(Objects.ToList(), eraserBounds);
+
+            foreach (var obj in intersectingObjects)
             {
-                if (obj.Bounds.IntersectsWith(eraserBounds))
-                {
-                    var eraseCommand = new EraseCommand(this, obj, actualEraserPath);
-                    compositeCommand.AddCommand(eraseCommand);
-                }
+                var eraseCommand = new EraseCommand(this, obj, actualEraserPath);
+                compositeCommand.AddCommand(eraseCommand);
             }
             if (compositeCommand.Count > 0)
             {
@@ -146,6 +190,8 @@ namespace DeNote.Models.Drawing
 
         // 이벤트
         public event EventHandler<DrawingObjectEventArgs> ObjectAdded;
+        public event EventHandler<DrawingObjectEventArgs> ObjectRemoved;
+
         public event EventHandler ActiveObjectChanged;
         public event EventHandler VisualInvalidated;
     }

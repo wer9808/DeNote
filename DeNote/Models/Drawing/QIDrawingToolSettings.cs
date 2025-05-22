@@ -27,7 +27,7 @@ namespace DeNote.Models
         // 펜 도구 설정 클래스
         public class QIPenToolSettings : QIDrawingToolSettings
         {
-            public float StrokeWidth { get; set; } = 2.0f;
+            public float StrokeWidth { get; set; } = 5.0f;
             public SKStrokeCap StrokeCap { get; set; } = SKStrokeCap.Round;
             public SKStrokeJoin StrokeJoin { get; set; } = SKStrokeJoin.Round;
             public float Opacity { get; set; } = 1.0f;
@@ -91,13 +91,13 @@ namespace DeNote.Models
         }
 
 
-        public class QIEraseToolSettings : QIDrawingToolSettings
+        public class QIEraserToolSettings : QIDrawingToolSettings
         {
             public float StrokeWidth { get; set; } = 10.0f;
 
             public override QIDrawingToolSettings Clone()
             {
-                return new QIEraseToolSettings
+                return new QIEraserToolSettings
                 {
                     StrokeWidth = StrokeWidth,
                 };

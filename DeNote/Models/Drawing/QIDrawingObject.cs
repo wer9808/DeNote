@@ -114,7 +114,6 @@ namespace DeNote.Models.Drawing
 
         public override void Render(SKCanvas canvas)
         {
-            Path.FillType = SKPathFillType.Winding;
             using (var paint = new SKPaint())
             {
                 paint.Color = StrokeColor;
@@ -128,7 +127,6 @@ namespace DeNote.Models.Drawing
 
         public void AddPoint(QIPoint point)
         {
-            IsPathCached = false;
             if (Points.Count == 0)
             {
                 Points.Add(point);
@@ -255,6 +253,7 @@ namespace DeNote.Models.Drawing
     public class QIHighlighter : QIStrokeObject
     {
         public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver; // Blend mode for the highlighter (e.g., normal, multiply, screen)
+        private SKPath OriginalPath { get; set; } = new SKPath(); // Original path before any modifications
 
         public QIHighlighter()
         {
@@ -266,18 +265,42 @@ namespace DeNote.Models.Drawing
 
         public override void Render(SKCanvas canvas)
         {
+            using (var paint = new SKPaint())
+            {
+                paint.Color = StrokeColor.WithAlpha(128);
+                paint.StrokeWidth = StrokeWidth;
+                paint.StrokeCap = StrokeCap;
+                paint.StrokeJoin = StrokeJoin;
+                paint.Style = SKPaintStyle.Fill;
+                paint.BlendMode = BlendMode;
+                paint.IsAntialias = true;
+                canvas.DrawPath(Path, paint);
+            }
+        }
+
+        public void AddPoint(QIPoint point)
+        {
+            if (Points.Count == 0)
+            {
+                Points.Add(point);
+                OriginalPath.MoveTo(point.X, point.Y);
+            }
+            else
+            {
+                var lastPoint = Points.Last();
+                if (lastPoint.DistanceTo(point) < 0.01f)
+                    return; // 너무 가까운 점은 무시
+                OriginalPath.LineTo(point.X, point.Y);
+            }
             using var paint = new SKPaint
             {
-                Color = StrokeColor.WithAlpha(128), // 반투명
                 StrokeWidth = StrokeWidth,
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
                 StrokeCap = StrokeCap,
                 StrokeJoin = StrokeJoin,
-                BlendMode = BlendMode
             };
-
-            canvas.DrawPath(Path, paint);
+            Path = paint.GetFillPath(OriginalPath);
         }
 
         public override QIDrawingObject Clone()

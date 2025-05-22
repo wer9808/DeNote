@@ -119,9 +119,6 @@ namespace DeNote.Models.Drawing
         {
             // 스트로크 최적화 및 최종 경로 생성
             // (베지에 곡선 등 더 복잡한 경로 생성이 가능)
-            // QIDrawingPathUtils.OptimizePoints(stroke);
-
-            // 최종 경로 생성
         }
 
         public void ApplySettings(QIDrawingToolSettings settings)
@@ -183,7 +180,6 @@ namespace DeNote.Models.Drawing
                     if (CurrentStroke != null)
                     {
                         AddPoint(CurrentStroke, input);
-                        UpdatePath(CurrentStroke);
                         context.InvalidateVisual();
                     }
                     break;
@@ -193,7 +189,6 @@ namespace DeNote.Models.Drawing
                     if (CurrentStroke != null)
                     {
                         AddPoint(CurrentStroke, input);
-                        UpdatePath(CurrentStroke);
                         FinalizeStroke(CurrentStroke);
                         context.AddDrawingObject(CurrentStroke);
                         CurrentStroke = null;
@@ -206,7 +201,7 @@ namespace DeNote.Models.Drawing
 
         private void AddPoint(QIHighlighter stroke, QIDrawingInputData input)
         {
-            stroke.Points.Add(new QIPoint
+            stroke.AddPoint(new QIPoint
             {
                 X = input.X,
                 Y = input.Y,
@@ -214,29 +209,10 @@ namespace DeNote.Models.Drawing
             });
         }
 
-        private void UpdatePath(QIHighlighter stroke)
-        {
-            // 간단한 경로 생성 (실시간 피드백용)
-            stroke.Path = new SKPath();
-
-            if (stroke.Points.Count == 0) return;
-
-            stroke.Path.MoveTo(stroke.Points[0].X, stroke.Points[0].Y);
-
-            for (int i = 1; i < stroke.Points.Count; i++)
-            {
-                stroke.Path.LineTo(stroke.Points[i].X, stroke.Points[i].Y);
-            }
-        }
-
         private void FinalizeStroke(QIHighlighter stroke)
         {
             // 스트로크 최적화 및 최종 경로 생성
             // (베지에 곡선 등 더 복잡한 경로 생성이 가능)
-            // QIDrawingPathUtils.OptimizePoints(stroke);
-
-            // 다양한 경로 생성 방법 중 선택
-
         }
 
         public void ApplySettings(QIDrawingToolSettings settings)
@@ -375,7 +351,7 @@ namespace DeNote.Models.Drawing
     public class QIEraserTool : IQIDrawingTool
     {
         public QIDrawingToolType Type => QIDrawingToolType.Eraser;
-        private QIEraseToolSettings Settings { get; set; } = new QIEraseToolSettings();
+        private QIEraserToolSettings Settings { get; set; } = new QIEraserToolSettings();
 
         public QIDrawingObject CreateDrawingObject()
         {
@@ -407,7 +383,7 @@ namespace DeNote.Models.Drawing
 
         public void ApplySettings(QIDrawingToolSettings settings)
         {
-            if (settings is QIEraseToolSettings eraseToolSettings)
+            if (settings is QIEraserToolSettings eraseToolSettings)
             {
                 Settings = eraseToolSettings;
             }
