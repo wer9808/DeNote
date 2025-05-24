@@ -82,12 +82,7 @@ namespace DeNote.Services
         // 특정 타입의 객체만 처리하는 팩토리 메서드
         public void AddObject(QIDrawingObject obj)
         {
-            ExecuteCommand(new AddDrawingObjectCommand(context, obj));
-        }
-
-        public void RemoveObject(QIDrawingObject obj)
-        {
-            ExecuteCommand(new RemoveDrawingObjectCommand(context, obj));
+            ExecuteCommand(new AddDrawingCommand(context, obj));
         }
 
         // 복합 명령 생성을 위한 메서드

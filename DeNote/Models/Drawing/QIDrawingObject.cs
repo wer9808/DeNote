@@ -1,4 +1,5 @@
 ﻿using DeNote.Utils;
+using RBush;
 using SkiaSharp;
 using SkiaSharp.Views.WPF;
 using System;
@@ -21,7 +22,7 @@ using Size = System.Windows.Size;
 namespace DeNote.Models.Drawing
 {
 
-    public abstract class QIDrawingObject
+    public abstract class QIDrawingObject : ISpatialData
     {
         public string Id { get; set; } = Guid.NewGuid().ToString(); // Unique identifier for the object
         public DateTime CreationTime { get; set; } = DateTime.Now; // Timestamp of when the object was created
@@ -51,7 +52,22 @@ namespace DeNote.Models.Drawing
             Path = Path.Op(eraserPath, SKPathOp.Difference);
         }
 
+        public void UpdateEnvelope()
+        {
+            this.envelope = new Envelope(Bounds.Left, Bounds.Top, Bounds.Right, Bounds.Bottom);
+        }
+
+        public virtual void UpdatePath(SKPath path)
+        {
+            Path = path;
+            UpdateEnvelope();
+            IsDirty = true;
+        }
+
         public virtual bool IsEmpty => Path == null || Path.IsEmpty;
+        protected Envelope envelope = new Envelope(0, 0, 0, 0);
+
+        public ref readonly Envelope Envelope => ref envelope; // Spatial data envelope for the object
     }
 
     public class QIPoint
@@ -144,32 +160,6 @@ namespace DeNote.Models.Drawing
                 Points.Add(point);
                 Path.AddPath(pointMesh);
             }
-        }
-
-        public void UpdatePath()
-        {
-            var path = new SKPath();
-            if (Points.Count == 0)
-            {
-                Path = path;
-                return;
-            }
-
-            var firstPoint = Points.First();
-            var firstMesh = CreatePointMesh(firstPoint);
-            Path.AddPath(firstMesh);
-
-            for (int i = 0; i < Points.Count - 1; i++)
-            {
-                var p0 = Points[i];
-                var p1 = Points[i + 1];
-                var mesh = CreateConnectionMesh(p0, p1);
-                path.AddPath(mesh);
-                mesh = CreatePointMesh(p0);
-                path.AddPath(mesh);
-            }
-
-            Path = path;
         }
 
         private SKPath CreateConnectionMesh(QIPoint p1, QIPoint p2)
@@ -378,7 +368,7 @@ namespace DeNote.Models.Drawing
             };
         }
 
-        internal void UpdatePath(SKPath shapePath)
+        public void UpdateShape(SKPath path)
         {
             using var paint = new SKPaint
             {
@@ -387,8 +377,10 @@ namespace DeNote.Models.Drawing
                 IsAntialias = true,
                 Style = FillOption ? SKPaintStyle.StrokeAndFill : SKPaintStyle.Stroke
             };
-            Path = paint.GetFillPath(shapePath);
+            Path = paint.GetFillPath(path);
+            UpdateEnvelope();
         }
+
     }
 
 }

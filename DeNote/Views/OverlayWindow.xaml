@@ -16,7 +16,7 @@
         Title="OverlayWindow">
     <Grid>
         <local:QIDrawingCanvasControl x:Name="DrawingCanvas" Panel.ZIndex="0"/>
-        <Border Visibility="{Binding ToolBarVisibility}"
+        <Border x:Name="ToolbarContainer" Visibility="{Binding ToolBarVisibility}"
                 BorderBrush="#AAFFFFFF" BorderThickness="0.5" CornerRadius="36" 
                 Background="#50443F" Opacity="0.9"
                 HorizontalAlignment="Right" VerticalAlignment="Top"

@@ -119,6 +119,7 @@ namespace DeNote.Models.Drawing
         {
             // 스트로크 최적화 및 최종 경로 생성
             // (베지에 곡선 등 더 복잡한 경로 생성이 가능)
+            stroke.UpdateEnvelope();
         }
 
         public void ApplySettings(QIDrawingToolSettings settings)
@@ -213,6 +214,7 @@ namespace DeNote.Models.Drawing
         {
             // 스트로크 최적화 및 최종 경로 생성
             // (베지에 곡선 등 더 복잡한 경로 생성이 가능)
+            stroke.UpdateEnvelope();
         }
 
         public void ApplySettings(QIDrawingToolSettings settings)
@@ -331,7 +333,7 @@ namespace DeNote.Models.Drawing
                     break;
             }
 
-            CurrentShape.UpdatePath(shapePath);
+            CurrentShape.UpdateShape(shapePath);
         }
 
         public void ApplySettings(QIDrawingToolSettings settings)

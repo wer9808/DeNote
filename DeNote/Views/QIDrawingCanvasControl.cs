@@ -62,7 +62,6 @@ namespace DeNote.Views
             // 이벤트 연결
             drawingContext.VisualInvalidated += (s, e) => InvalidateVisual();
             toolManager.ToolChanged += OnToolChanged;
-            drawingContext.ObjectAdded += OnObjectAdded;
 
             PaintSurface += OnPaintSurface;
         }
@@ -245,12 +244,6 @@ namespace DeNote.Views
             InvalidateVisual();
         }
 
-        // 객체 추가 시 처리
-        private void OnObjectAdded(object sender, DrawingObjectEventArgs e)
-        {
-            // 필요한 경우 캐싱 등 처리
-        }
-
         // 도구 변경 처리
         private void OnToolChanged(object sender, ToolChangedEventArgs e)
         {
@@ -336,7 +329,7 @@ namespace DeNote.Views
         }
 
         // 마우스 이벤트도 처리
-        protected override void OnMouseDown(MouseButtonEventArgs e)
+        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         {
             if (e.StylusDevice != null) return;
 
@@ -384,7 +377,7 @@ namespace DeNote.Views
             e.Handled = true;
         }
 
-        protected override void OnMouseUp(MouseButtonEventArgs e)
+        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
         {
             if (e.StylusDevice != null) return;
 
@@ -400,6 +393,21 @@ namespace DeNote.Views
 
             e.Handled = true;
             ReleaseMouseCapture();
+        }
+
+        protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
+        {
+            if (e.StylusDevice != null) return;
+            var point = e.GetPosition(this);
+            MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MousePosition = point, MenuRequestType = MenuRequestType.Open });
+            e.Handled = true;
+        }
+
+        protected override void OnStylusButtonDown(StylusButtonEventArgs e)
+        {
+            var point = e.GetPosition(this);
+            MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MousePosition = point, MenuRequestType = MenuRequestType.Open });
+            e.Handled = true;
         }
 
         protected override void OnStylusDown(StylusDownEventArgs e)
@@ -520,5 +528,19 @@ namespace DeNote.Views
         // 외부 이벤트
         public event EventHandler<ToolChangedEventArgs> ToolChanged;
 
+        public event EventHandler<MenuRequestedEventArgs> MenuRequested;
+
+        public enum MenuRequestType
+        {
+            Open,
+            Close,
+
+        }
+
+        public class MenuRequestedEventArgs : EventArgs
+        {
+            public Point MousePosition { get; set; }
+            public required MenuRequestType MenuRequestType { get; set; }
+        }
     }
 }

@@ -64,6 +64,8 @@ namespace DeNote.Views
 
             UpdateColorPreview();
             UpdateToolButtonStates();
+            DrawingCanvas.ToolChanged += (s, e) => UpdateToolButtonStates();
+            DrawingCanvas.MenuRequested += (s, e) => OnMenuRequested(s, e);
         }
 
         private void OverlayWindow_Loaded(object sender, RoutedEventArgs e)
@@ -136,14 +138,12 @@ namespace DeNote.Views
         {
             DrawingCanvas.ChangeTool(QIDrawingToolType.Pen);
             UpdateColorPreview();
-            UpdateToolButtonStates();
         }
 
         private void HighlighterBtn_Click(object sender, RoutedEventArgs e)
         {
             DrawingCanvas.ChangeTool(QIDrawingToolType.Highlighter);
             UpdateColorPreview();
-            UpdateToolButtonStates();
         }
 
 
@@ -248,7 +248,6 @@ namespace DeNote.Views
                 DrawingCanvas.ChangeTool(QIDrawingToolType.Shape);
 
                 UpdateColorPreview();
-                UpdateToolButtonStates();
             }
         }
 
@@ -256,7 +255,6 @@ namespace DeNote.Views
         {
             DrawingCanvas.ChangeTool(QIDrawingToolType.Eraser);
             UpdateColorPreview();
-            UpdateToolButtonStates();
         }
 
 
@@ -492,6 +490,18 @@ namespace DeNote.Views
         private async void ToggleBackgroundBtn_Click(object sender, RoutedEventArgs e)
         {
             await DrawingCanvas.ToggleBackgroundOption();
+        }
+
+        private void OnMenuRequested(object sender, QIDrawingCanvasControl.MenuRequestedEventArgs e)
+        {
+
+            var requestType = e.MenuRequestType;
+
+            if (requestType == QIDrawingCanvasControl.MenuRequestType.Open)
+            {
+
+            }
+
         }
     }
 }
