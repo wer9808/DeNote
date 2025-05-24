@@ -27,7 +27,7 @@ namespace DeNote.Views
         SolidColor
     }
 
-    public class QIDrawingCanvasControl : SKGLElement
+    public class QIDrawingCanvasView : SKGLElement
     {
         private float defaultPressure = 1.0f; // 기본 압력 값
 
@@ -45,7 +45,7 @@ namespace DeNote.Views
         private QIToolManager toolManager;
         private QIDrawingRenderer renderer = new QIDrawingRenderer();
 
-        public QIDrawingCanvasControl()
+        public QIDrawingCanvasView()
         {
             float primaryScreenWidth = (float)SystemParameters.PrimaryScreenWidth;
             float primaryScreenHeight = (float)SystemParameters.PrimaryScreenHeight;
@@ -372,9 +372,9 @@ namespace DeNote.Views
                     Y = (float)point.Y,
                     Pressure = defaultPressure
                 });
-            }
 
-            e.Handled = true;
+                e.Handled = true;
+            }
         }
 
         protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
@@ -395,7 +395,7 @@ namespace DeNote.Views
             ReleaseMouseCapture();
         }
 
-        protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
+        protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
         {
             if (e.StylusDevice != null) return;
             var point = e.GetPosition(this);
@@ -403,7 +403,7 @@ namespace DeNote.Views
             e.Handled = true;
         }
 
-        protected override void OnStylusButtonDown(StylusButtonEventArgs e)
+        protected override void OnStylusButtonUp(StylusButtonEventArgs e)
         {
             var point = e.GetPosition(this);
             MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MousePosition = point, MenuRequestType = MenuRequestType.Open });

@@ -1,176 +1,21 @@
-﻿<Window x:Class="DeNote.Views.OverlayWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DeNote.Views"
-        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-        xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
-        xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
-        mc:Ignorable="d"
-        WindowState="Maximized"
-        WindowStyle="None"
-        IsHitTestVisible="True"
-        ResizeMode="NoResize"
-        Focusable="False"
-        Title="OverlayWindow">
+﻿<Window
+    x:Class="DeNote.Views.OverlayWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:DeNote.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
+    xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="OverlayWindow"
+    Focusable="False"
+    IsHitTestVisible="True"
+    ResizeMode="NoResize"
+    WindowState="Maximized"
+    WindowStyle="None"
+    mc:Ignorable="d">
     <Grid>
-        <local:QIDrawingCanvasControl x:Name="DrawingCanvas" Panel.ZIndex="0"/>
-        <Border x:Name="ToolbarContainer" Visibility="{Binding ToolBarVisibility}"
-                BorderBrush="#AAFFFFFF" BorderThickness="0.5" CornerRadius="36" 
-                Background="#50443F" Opacity="0.9"
-                HorizontalAlignment="Right" VerticalAlignment="Top"
-                Panel.ZIndex="10"
-                Margin="10">
-            <ToolBarTray x:Name="DrawingToolbar"
-                         Background="Transparent"
-                      Margin="10,0">
-                <ToolBar ToolBarTray.IsLocked="True" HorizontalAlignment="Stretch" VerticalAlignment="Center">
-                    <TextBlock Text="De:Note" FontSize="20" Foreground="White" Margin="10,0" VerticalAlignment="Center"/>
-                    <Separator Opacity="0.2" />
-                    <StackPanel x:Name="DrawingToolPanel" Orientation="Horizontal">
-                        <ui:Button x:Name="PenBtn" Click="PenBtn_Click" 
-                                   BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                                   HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                            <!-- Pen -->
-                            <TextBlock Text="✏️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </ui:Button>
-                        <ui:Button x:Name="HighlighterBtn" Click="HighlighterBtn_Click" 
-                                   BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                                   HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                            <!-- Pen -->
-                            <TextBlock Text="🖍️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </ui:Button>
-                        <ui:Button x:Name="ShapeBtn" Click="ShapeBtn_Click"  
-                                   BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                                   HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                            <TextBlock Text="🔶" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </ui:Button>
-                        <ui:Button x:Name="EraserBtn" Click="EraserBtn_Click"  
-                                   BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                                   HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                            <TextBlock Text="❇️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </ui:Button>
-                    </StackPanel>
-                    <Separator Opacity="0.2" />
-                    <ui:Button x:Name="ClearDrawingBtn" Click="ClearDrawingBtn_Click" HorizontalAlignment="Stretch" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                           CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="✨" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <ui:Button x:Name="UndoBtn" Click="UndoBtn_Click" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="↩" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <ui:Button x:Name="RedoBtn" Click="RedoBtn_Click" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="↪" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <Separator Opacity="0.2" />
-                    <ui:Button x:Name="ThicknessBtn" Click="ThicknessBtn_Click" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="✒️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <ui:Button x:Name="ColorPickerBtn" Click="ColorPickerBtn_Click" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange"
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <Ellipse x:Name="ColorPreviewCircle" Stroke="#C0FFFFFF" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <Separator Opacity="0.2" />
-                    <ui:Button x:Name="RecordBtn" Click="RecordBtn_Click" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="🎦" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <ui:Button x:Name="SaveBtn" Click="SaveBtn_Click" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="📸" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <ui:Button x:Name="ToggleBackgroundBtn" Click="ToggleBackgroundBtn_Click" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="🖼️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <ui:Button x:Name="SettingBtn" Click="SettingBtn_Click" 
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF"
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="ℹ️" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                    <ui:Button x:Name="CloseBtn" Click="CloseBtn_Click"
-                               BorderBrush="Transparent" Background="Transparent" MouseOverBackground="Orange" Foreground="#C0FFFFFF" 
-                               HorizontalAlignment="Stretch" CornerRadius="30" Margin="10" Padding="10">
-                        <TextBlock Text="❌" Width="20" Height="20" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ui:Button>
-                </ToolBar>
-            </ToolBarTray>
-        </Border>
-        
-        <tray:NotifyIcon>
-            <tray:NotifyIcon.Menu>
-                <ContextMenu>
-                    <MenuItem Header="열기" Click="NotifyIcon_Show" />
-                    <MenuItem Header="종료" Click="NotifyIcon_Exit" />
-                </ContextMenu>
-            </tray:NotifyIcon.Menu>
-        </tray:NotifyIcon>
-
-        <Popup x:Name="ShapePickerPopup" PlacementTarget="{Binding ElementName=ShapeBtn}" StaysOpen="False" Placement="Bottom">
-            <Border Background="White" BorderBrush="Black" BorderThickness="1" Padding="10">
-                <StackPanel>
-                    <TextBlock Text="옵션" FontWeight="Bold" FontSize="14"/>
-                    <StackPanel Orientation="Horizontal">
-                        <CheckBox x:Name="FillOptionCheckBox" Content="채우기" Margin="5" Checked="FillOptionCheckBox_Checked" Unchecked="FillOptionCheckBox_Checked"/>
-                    </StackPanel>
-                    <TextBlock Text="도형 선택" FontWeight="Bold" Margin="0,0,0,10"/>
-                    <!-- 도형 선택 버튼들 -->
-                    <StackPanel x:Name="ShapesPanel" Orientation="Horizontal">
-                        <Button x:Name="RectangleBtn" Content="사각형" Click="ShapeTypeBtn_Click" Tag="Rectangle" Margin="5"/>
-                        <Button x:Name="EllipseBtn" Content="원" Click="ShapeTypeBtn_Click" Tag="Ellipse" Margin="5"/>
-                        <Button x:Name="TriangleBtn" Content="삼각형" Click="ShapeTypeBtn_Click" Tag="Triangle" Margin="5"/>
-                        <Button x:Name="LineBtn" Content="선" Click="ShapeTypeBtn_Click" Tag="Line" Margin="5"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Popup>
-
-        <Popup x:Name="ThicknessPopup" PlacementTarget="{Binding ElementName=ThicknessBtn}" StaysOpen="False" Placement="Bottom">
-            <Border Background="White" BorderBrush="Black" BorderThickness="1" Padding="10">
-                <StackPanel>
-                    <TextBlock Text="두께" FontWeight="Bold" FontSize="14" TextAlignment="Center"/>
-                    <StackPanel Orientation="Vertical">
-                        <Slider x:Name="ThicknessSlider" Orientation="Vertical" HorizontalAlignment="Center" Minimum="1" Maximum="20" TickFrequency="1" ValueChanged="ThicknessSlider_ValueChanged" Value="5" IsSnapToTickEnabled="True" Margin="5"/>
-                        <TextBlock x:Name="ThicknessValueText" Text="{Binding ElementName=ThicknessSlider, Path=Value, StringFormat={}{0}}" TextAlignment="Center" HorizontalAlignment="Center" Width="40"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Popup>
-
-        <Popup x:Name="ColorPickerPopup" PlacementTarget="{Binding ElementName=ColorPickerBtn}" StaysOpen="False" Placement="Bottom">
-            <Border Background="White" BorderBrush="Black" BorderThickness="1" Padding="10">
-                <StackPanel>
-                    <TextBlock Text="색상 선택" FontWeight="Bold" FontSize="14"/>
-                    <UniformGrid Columns="4">
-                        <Button x:Name="RedBtn" Background="Red" Click="ColorBtn_Click" Tag="Red" Margin="5"/>
-                        <Button x:Name="GreenBtn" Background="Green" Click="ColorBtn_Click" Tag="Green" Margin="5"/>
-                        <Button x:Name="BlueBtn" Background="Blue" Click="ColorBtn_Click" Tag="Blue" Margin="5"/>
-                        <Button x:Name="YellowBtn" Background="Yellow" Click="ColorBtn_Click" Tag="Yellow" Margin="5"/>
-                        <Button x:Name="CyanBtn" Background="Cyan" Click="ColorBtn_Click" Tag="Cyan" Margin="5"/>
-                        <Button x:Name="MagentaBtn" Background="Magenta" Click="ColorBtn_Click" Tag="Magenta" Margin="5"/>
-                        <Button x:Name="BlackBtn" Background="Black" Click="ColorBtn_Click" Tag="Black" Margin="5"/>
-                        <Button x:Name="WhiteBtn" Background="White" Click="ColorBtn_Click" Tag="White" Margin="5"/>
-                        <Button x:Name="GrayBtn" Background="Gray" Click="ColorBtn_Click" Tag="Gray" Margin="5"/>
-                        <Button x:Name="OrangeBtn" Background="Orange" Click="ColorBtn_Click" Tag="Orange" Margin="5"/>
-                        <Button x:Name="PinkBtn" Background="Pink" Click="ColorBtn_Click" Tag="Pink" Margin="5"/>
-                        <Button x:Name="PurpleBtn" Background="Purple" Click="ColorBtn_Click" Tag="Purple" Margin="5"/>
-                        <Button x:Name="BrownBtn" Background="Brown" Click="ColorBtn_Click" Tag="Brown" Margin="5"/>
-                        <Button x:Name="LimeBtn" Background="Lime" Click="ColorBtn_Click" Tag="Lime" Margin="5"/>
-                    </UniformGrid>
-                </StackPanel>
-            </Border>
-        </Popup>
+        <local:QIDrawingCanvasControl x:Name="DrawingCanvasControl"/>
     </Grid>
 </Window>
