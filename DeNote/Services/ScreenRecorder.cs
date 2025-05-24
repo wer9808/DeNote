@@ -40,18 +40,21 @@ namespace DeNote.Services
                     VideoEncoderOptions = new VideoEncoderOptions
                     {
                         Framerate = 30, // 초당 프레임 수
-                        Quality = 70, // 비디오 품질 (0-100)
+                        Quality = 100, // 비디오 품질 (0-100)
                         Bitrate = 5000000, // 비트레이트 (5Mbps)
-                        Encoder = new H264VideoEncoder()
+                        Encoder = new H264VideoEncoder() // H.264 인코더 사용
                     },
 
                     // 출력 설정
                     OutputOptions = new OutputOptions
                     {
                         RecorderMode = RecorderMode.Video,
+                        
                         // null로 설정하면 원본 해상도 유지
                         OutputFrameSize = null
                     }
+
+                    
                 };
 
                 // 레코더 생성
@@ -61,22 +64,20 @@ namespace DeNote.Services
                 _recorder.OnRecordingFailed += OnRecordingFailed;
                 _recorder.OnStatusChanged += OnRecordingStatusChanged;
 
-                string fileDir = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
-                    $"DeNote");
+                string saveDir = AppConfig.VideoSavePath;
 
-                if (!System.IO.Directory.Exists(fileDir))
+                if (!System.IO.Directory.Exists(saveDir))
                 {
-                    System.IO.Directory.CreateDirectory(fileDir);
+                    System.IO.Directory.CreateDirectory(saveDir);
                 }
 
                 // 저장할 파일 경로 지정
-                string filePath = System.IO.Path.Combine(
-                    fileDir,
+                string savePath = System.IO.Path.Combine(
+                    saveDir,
                     $"ScreenRecording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
 
                 // 녹화 시작
-                _recorder.Record(filePath);
+                _recorder.Record(savePath);
 
                 _isRecording = true;
             }
@@ -160,7 +161,7 @@ namespace DeNote.Services
         private void OnRecordingStatusChanged(object sender, RecordingStatusEventArgs e)
         {
             // 상태 변경 처리 (필요한 경우)
-            Debug.WriteLine($"녹화 상태 변경: {e.Status}");
+
         }
 
         private void DisposeRecorder()

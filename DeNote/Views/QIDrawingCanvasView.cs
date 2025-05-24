@@ -33,7 +33,6 @@ namespace DeNote.Views
 
         private BackgroundOption backgroundOption = BackgroundOption.Capture;
         private SKBitmap _backgroundBitmap;
-        private ScreenCaptureService _captureService;
         private bool _isBackgroundCaptured = false;
         public bool IsBackgroundCaptured => _isBackgroundCaptured;
         public bool IsCapturing { get; private set; }
@@ -52,8 +51,6 @@ namespace DeNote.Views
 
             drawingContext = new QIDrawingContext(primaryScreenWidth, primaryScreenHeight);
             toolManager = new QIToolManager(drawingContext);
-
-            _captureService = new ScreenCaptureService();
 
             // 컨트롤이 로드될 때 초기 캡처 수행
             this.Loaded += QIDrawingCanvasControl_Loaded;
@@ -183,7 +180,7 @@ namespace DeNote.Views
                 IntPtr windowHandle = new System.Windows.Interop.WindowInteropHelper(currentWindow).Handle;
 
                 // 캡처 서비스를 통해 화면 캡처
-                var newBitmap = await _captureService.CaptureScreenWithoutWindowAsync(windowHandle);
+                var newBitmap = await ScreenCaptureService.CaptureScreenWithoutWindowAsync(windowHandle);
 
                 // UI 스레드에서 비트맵 업데이트
                 Dispatcher.Invoke(() =>
@@ -523,6 +520,28 @@ namespace DeNote.Views
         public void Redo()
         {
             drawingContext.CommandManager.Redo();
+        }
+
+        public async Task SaveCapture()
+        {
+            try
+            {
+                // 현재 창의 핸들 가져오기
+                Window currentWindow = Window.GetWindow(this);
+                if (currentWindow == null)
+                {
+                    IsCapturing = false;
+                    return;
+                }
+
+                IntPtr windowHandle = new System.Windows.Interop.WindowInteropHelper(currentWindow).Handle;
+
+                await ScreenCaptureService.SaveScreenShot(windowHandle);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Background capture error: {ex.Message}");
+            }
         }
 
         // 외부 이벤트

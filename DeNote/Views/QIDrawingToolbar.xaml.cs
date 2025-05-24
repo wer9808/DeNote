@@ -22,7 +22,7 @@ namespace DeNote.Views
     /// <summary>
     /// QIDrawingToolbar.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class QIDrawingToolbar : UserControl
+    public partial class QIDrawingToolbar : UserControl, IDisposable
     {
         private QIDrawingCanvasView _canvasView;
 
@@ -212,49 +212,9 @@ namespace DeNote.Views
             }
         }
 
-
-        private void ClearDrawingBtn_Click(object sender, RoutedEventArgs e)
-        {
-            _canvasView.Clear();
-        }
-
-        private void UndoBtn_Click(object sender, RoutedEventArgs e)
-        {
-            _canvasView.Undo();
-        }
-
-        private void RedoBtn_Click(object sender, RoutedEventArgs e)
-        {
-            _canvasView.Redo();
-        }
-
         private void CloseBtn_Click(object sender, RoutedEventArgs e)
         {
             ToolbarPopup.IsOpen = false;
-        }
-
-        private void RecordBtn_Click(object sender, RoutedEventArgs e)
-        {
-            //if (screenRecorder.IsRecording)
-            //{
-            //    screenRecorder.StopRecording();
-            //    RecordBtn.Content = "🎦";
-            //}
-            //else
-            //{
-            //    screenRecorder.StartRecording();
-            //    RecordBtn.Content = "⏹️";
-            //}
-        }
-
-        private void SaveBtn_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void SettingBtn_Click(object sender, RoutedEventArgs e)
-        {
-
         }
 
         private void UpdateColorPreview()
@@ -387,12 +347,6 @@ namespace DeNote.Views
             }
         }
 
-        private async void ToggleBackgroundBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (_canvasView == null) return;
-            await _canvasView.ToggleBackgroundOption();
-        }
-
 
         private void OnMenuRequested(object sender, QIDrawingCanvasView.MenuRequestedEventArgs e)
         {
@@ -407,6 +361,11 @@ namespace DeNote.Views
             {
                 ToolbarPopup.IsOpen = false;
             }
+
+        }
+
+        public void Dispose()
+        {
 
         }
     }

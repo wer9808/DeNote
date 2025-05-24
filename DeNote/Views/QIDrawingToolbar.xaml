@@ -6,6 +6,7 @@
     xmlns:local="clr-namespace:DeNote.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    d:DesignWidth="800" d:DesignHeight="100"
     mc:Ignorable="d">
     <Grid>
         <Popup
@@ -24,12 +25,12 @@
                 BorderThickness="0.2"
                 CornerRadius="16"
                 Opacity="0.9">
-                <StackPanel Margin="5" Orientation="Horizontal">
+                <StackPanel Margin="0" Orientation="Horizontal">
                     <StackPanel x:Name="DrawingToolPanel" Orientation="Horizontal">
                         <ui:Button
                             x:Name="PenBtn"
-                            Margin="10"
-                            Padding="10"
+                            Margin="8"
+                            Padding="5"
                             HorizontalAlignment="Stretch"
                             Background="Transparent"
                             BorderBrush="Transparent"
@@ -48,8 +49,8 @@
                         </ui:Button>
                         <ui:Button
                             x:Name="HighlighterBtn"
-                            Margin="10"
-                            Padding="10"
+                            Margin="4,8"
+                            Padding="5"
                             HorizontalAlignment="Stretch"
                             Background="Transparent"
                             BorderBrush="Transparent"
@@ -68,8 +69,8 @@
                         </ui:Button>
                         <ui:Button
                             x:Name="ShapeBtn"
-                            Margin="10"
-                            Padding="10"
+                            Margin="4,8"
+                            Padding="5"
                             HorizontalAlignment="Stretch"
                             Background="Transparent"
                             BorderBrush="Transparent"
@@ -87,8 +88,8 @@
                         </ui:Button>
                         <ui:Button
                             x:Name="EraserBtn"
-                            Margin="10"
-                            Padding="10"
+                            Margin="4,8"
+                            Padding="5"
                             HorizontalAlignment="Stretch"
                             Background="Transparent"
                             BorderBrush="Transparent"
@@ -105,69 +106,11 @@
                                 TextAlignment="Center" />
                         </ui:Button>
                     </StackPanel>
-                    <Separator Opacity="0.2" />
-                    <ui:Button
-                        x:Name="ClearDrawingBtn"
-                        Margin="10"
-                        Padding="10"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="ClearDrawingBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="✨"
-                            TextAlignment="Center" />
-                    </ui:Button>
-                    <ui:Button
-                        x:Name="UndoBtn"
-                        Margin="10"
-                        Padding="10"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="UndoBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="↩"
-                            TextAlignment="Center" />
-                    </ui:Button>
-                    <ui:Button
-                        x:Name="RedoBtn"
-                        Margin="10"
-                        Padding="10"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="RedoBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="↪"
-                            TextAlignment="Center" />
-                    </ui:Button>
-                    <Separator Opacity="0.2" />
+                    <Separator Opacity="0.5" />
                     <ui:Button
                         x:Name="ThicknessBtn"
-                        Margin="10"
-                        Padding="10"
+                            Margin="4,8"
+                            Padding="5"
                         HorizontalAlignment="Stretch"
                         Background="Transparent"
                         BorderBrush="Transparent"
@@ -185,8 +128,8 @@
                     </ui:Button>
                     <ui:Button
                         x:Name="ColorPickerBtn"
-                        Margin="10"
-                        Padding="10"
+                            Margin="4,8"
+                            Padding="5"
                         HorizontalAlignment="Stretch"
                         Background="Transparent"
                         BorderBrush="Transparent"
@@ -201,87 +144,11 @@
                             VerticalAlignment="Center"
                             Stroke="#C0FFFFFF" />
                     </ui:Button>
-                    <Separator Opacity="0.2" />
-                    <ui:Button
-                        x:Name="RecordBtn"
-                        Margin="10"
-                        Padding="10"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="RecordBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="🎦"
-                            TextAlignment="Center" />
-                    </ui:Button>
-                    <ui:Button
-                        x:Name="SaveBtn"
-                        Margin="10"
-                        Padding="10"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="SaveBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="📸"
-                            TextAlignment="Center" />
-                    </ui:Button>
-                    <ui:Button
-                        x:Name="ToggleBackgroundBtn"
-                        Margin="10"
-                        Padding="10"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="ToggleBackgroundBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="🖼️"
-                            TextAlignment="Center" />
-                    </ui:Button>
-                    <ui:Button
-                        x:Name="SettingBtn"
-                        Margin="10"
-                        Padding="10"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="SettingBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="ℹ️"
-                            TextAlignment="Center" />
-                    </ui:Button>
+                    <Separator Opacity="0.5" />
                     <ui:Button
                         x:Name="CloseBtn"
-                        Margin="10"
-                        Padding="10"
+                            Margin="8"
+                            Padding="5"
                         HorizontalAlignment="Stretch"
                         Background="Transparent"
                         BorderBrush="Transparent"

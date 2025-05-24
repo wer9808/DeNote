@@ -11,15 +11,20 @@
     <Grid>
         <local:QIDrawingCanvasView x:Name="DrawingCanvasView" Panel.ZIndex="0" />
         <local:QIDrawingToolbar x:Name="DrawingCanvasToolbar" Panel.ZIndex="10" />
+        <local:QIDrawingCanvasMenu
+            x:Name="DrawingCanvasMenu"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Panel.ZIndex="20" />
         <TextBlock
             Margin="20,10"
-            IsHitTestVisible="False"
             HorizontalAlignment="Left"
             VerticalAlignment="Top"
             Panel.ZIndex="1"
             Background="Transparent"
             FontSize="24"
             Foreground="White"
+            IsHitTestVisible="False"
             Opacity="0.5"
             Text="De:Note" />
     </Grid>

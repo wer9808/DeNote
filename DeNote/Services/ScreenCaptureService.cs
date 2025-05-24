@@ -34,7 +34,7 @@ namespace DeNote.Services
         private const int SW_HIDE = 0;
         private const int SW_SHOW = 5;
 
-        public async Task<SKBitmap?> CaptureScreenWithoutWindowAsync(IntPtr windowHandle)
+        public static async Task<SKBitmap?> CaptureScreenWithoutWindowAsync(IntPtr windowHandle)
         {
             return await Task.Run(() =>
             {
@@ -83,6 +83,81 @@ namespace DeNote.Services
 
                 return result;
             });
+        }
+
+        private static async Task<SKBitmap?> CaptureScreenAsync(IntPtr windowHandle)
+        {
+            return await Task.Run(() =>
+            {
+                SKBitmap result = null;
+
+                try
+                {
+                    // 4. 전체 화면 캡처
+                    int screenWidth = (int)SystemParameters.PrimaryScreenWidth;
+                    int screenHeight = (int)SystemParameters.PrimaryScreenHeight;
+
+                    using (Bitmap screenBitmap = new Bitmap(screenWidth, screenHeight))
+                    {
+                        using (Graphics g = Graphics.FromImage(screenBitmap))
+                        {
+                            g.CopyFromScreen(0, 0, 0, 0, screenBitmap.Size);
+                        }
+
+                        // 5. Bitmap을 SKBitmap으로 변환
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            screenBitmap.Save(ms, ImageFormat.Png);
+                            ms.Position = 0;
+                            result = SKBitmap.Decode(ms);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Screen capture error: {ex.Message}");
+                }
+
+                return result;
+            });
+        }
+
+        public static async Task SaveScreenShot(IntPtr windowHandle)
+        {
+            try
+            {
+                SKBitmap? bitmap = await CaptureScreenAsync(windowHandle);
+                if (bitmap != null)
+                {
+
+                    string saveDir = AppConfig.ImageSavePath;
+
+                    if (!System.IO.Directory.Exists(saveDir))
+                    {
+                        System.IO.Directory.CreateDirectory(saveDir);
+                    }
+
+                    // 저장할 파일 경로 지정
+                    string savePath = System.IO.Path.Combine(
+                        saveDir,
+                        $"ScreenShot_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+
+                    using (var image = SKImage.FromBitmap(bitmap))
+                    using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
+                    using (var stream = File.OpenWrite(savePath))
+                    {
+                        data.SaveTo(stream);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Failed to capture screen.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving screenshot: {ex.Message}");
+            }
         }
     }
 }

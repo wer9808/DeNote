@@ -32,8 +32,4 @@
     <Resource Include="Resources\icon_shape.png" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="ViewModels\" />
-  </ItemGroup>
-
 </Project>

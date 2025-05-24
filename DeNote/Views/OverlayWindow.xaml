@@ -17,5 +17,6 @@
     mc:Ignorable="d">
     <Grid>
         <local:QIDrawingCanvasControl x:Name="DrawingCanvasControl"/>
+        
     </Grid>
 </Window>

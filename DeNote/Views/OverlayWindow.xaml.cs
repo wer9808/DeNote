@@ -52,8 +52,6 @@ namespace DeNote.Views
         private IntPtr _windowHandle;
         private HwndSource _source;
 
-        private ScreenRecorder screenRecorder = new ScreenRecorder();
-
         public OverlayWindow()
         {
             InitializeComponent();
@@ -61,6 +59,8 @@ namespace DeNote.Views
             this.Loaded += OverlayWindow_Loaded;
             this.Closing += OverlayWindow_Closing;
             this.Activated += OverlayWindow_Activated;
+
+            DrawingCanvasControl.CloseRequested += (s, e) => HideToTray();
         }
 
         private void OverlayWindow_Loaded(object sender, RoutedEventArgs e)
@@ -149,7 +149,7 @@ namespace DeNote.Views
 
         public void Dispose()
         {
-            screenRecorder.Dispose();
+            DrawingCanvasControl?.Dispose();
             // 핫키 등록 해제
             UnregisterHotKey(_windowHandle, HOTKEY_ID);
             // HwndSource 정리
