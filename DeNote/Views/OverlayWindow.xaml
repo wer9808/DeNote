@@ -9,14 +9,20 @@
     xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="OverlayWindow"
-    Focusable="False"
-    IsHitTestVisible="True"
     ResizeMode="NoResize"
     WindowState="Maximized"
     WindowStyle="None"
     mc:Ignorable="d">
     <Grid>
         <local:QIDrawingCanvasControl x:Name="DrawingCanvasControl"/>
-        
+        <tray:NotifyIcon>
+            <tray:NotifyIcon.Menu>
+                <ContextMenu>
+                    <MenuItem Header="열기" Click="NotifyIcon_Show" />
+                    <MenuItem Header="종료" Click="NotifyIcon_Exit" />
+                </ContextMenu>
+            </tray:NotifyIcon.Menu>
+        </tray:NotifyIcon>
     </Grid>
+    
 </Window>

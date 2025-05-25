@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace DeNote.Models.Drawing
 {
@@ -72,25 +73,52 @@ namespace DeNote.Models.Drawing
         private ObservableCollection<QIDrawingObject> _drawingObjects => context.Objects;
         private readonly SKPath _eraserPath;
 
-        // 완전히 지워진 객체: (지워진 객체, 지워지기 전 Path, 컬렉션 내 원래 인덱스)
-        // 이제 originalPath는 지워지기 전의 최종 Path가 됩니다.
-        private readonly List<(QIDrawingObject obj, SKPath oldPath, int originalIndex)> _completelyRemovedObjects;
+        private readonly Dispatcher _dispatcher; // UI 스레드 접근을 위한 Dispatcher
 
-        // Path가 변경된 객체: (변경될 객체, 변경 전 Path)
-        private readonly List<(QIDrawingObject obj, SKPath oldPath)> _partiallyModifiedObjects;
+        public class EraseOperationResult : IDisposable
+        {
+            public QIDrawingObject TargetObject { get; }
+            public SKPath OldPath { get; } // 이 Path는 Dispose() 되어야 함
+            public SKPath NewPath { get; } // 이 Path는 Dispose() 되어야 함
+            public int OriginalIndex { get; }
+            public bool IsCompletelyErased => NewPath.IsEmpty;
+
+            public EraseOperationResult(QIDrawingObject target, SKPath oldPath, SKPath newPath, int originalIndex)
+            {
+                TargetObject = target;
+                OldPath = oldPath; // 생성된 Path를 받아서 보관
+                NewPath = newPath; // 생성된 Path를 받아서 보관
+                OriginalIndex = originalIndex;
+            }
+
+            // IDisposable 구현
+            public void Dispose()
+            {
+                // 내부 SKPath 객체들을 안전하게 Dispose()
+                OldPath?.Dispose();
+                NewPath?.Dispose();
+            }
+        }
+
+        // Command 실행 결과 (Undo를 위한)
+        private readonly List<EraseOperationResult> _lastExecutedResults;
 
         public EraseCommand(QIDrawingContext context, SKPath eraserPath)
         {
             this.context = context;
             _eraserPath = eraserPath;
-            _completelyRemovedObjects = new List<(QIDrawingObject obj, SKPath oldPath, int originalIndex)>();
-            _partiallyModifiedObjects = new List<(QIDrawingObject obj, SKPath oldPath)>();
+            _dispatcher = Dispatcher.CurrentDispatcher;
+            _lastExecutedResults = new List<EraseOperationResult>();
         }
 
         public void Execute()
         {
-            _completelyRemovedObjects.Clear();
-            _partiallyModifiedObjects.Clear();
+            Task.Run(ExecuteAsync);
+        }
+
+        public async Task ExecuteAsync()
+        {
+            _lastExecutedResults.Clear(); // 새로운 Execute를 위해 이전 결과 클리어
 
             // 1. 지우개 Path의 Bounding Box를 사용하여 R-tree에서 겹치는 객체들만 쿼리
             SKRect eraserBounds = _eraserPath.Bounds;
@@ -105,59 +133,115 @@ namespace DeNote.Models.Drawing
                 .OrderByDescending(x => x.OriginalIndex)
                 .ToList();
 
+            // UI 스레드에서 Path.Op 결과들을 저장할 임시 리스트
+            var resultsToApply = new List<EraseOperationResult>();
+
+            List<Task> opTasks = new List<Task>();
+
+            // `lock` 객체는 비동기 작업 결과를 저장할 리스트 접근 시 사용
+            object lockObject = new object();
+
             foreach (var item in sortedTargets)
             {
                 var drawingObject = item.Obj;
                 int originalIndex = item.OriginalIndex;
 
-                // 지우개 Path와 DrawingObject의 Path가 겹치는지 다시 한번 정확히 확인 (Bounding Box 외에 실제 Path 겹침)
-                // if (drawingObject.Path.Bounds.IntersectsWith(_eraserPath.Bounds)) // 이 검사는 R-tree에서 이미 걸러졌지만, 더 정확한 교차 확인을 위해 유지
+                Task opTask = Task.Run(() =>
                 {
-                    SKPath oldPath = new SKPath(drawingObject.Path);
-                    var newPath = new SKPath();
-
-                    if (drawingObject.Path.Op(_eraserPath, SKPathOp.Difference, newPath))
+                    // **중요: 백그라운드 스레드에서 생성되는 모든 SKPath는 여기서 Dispose를 관리해야 합니다.**
+                    using (SKPath currentPathCopy = new SKPath(drawingObject.Path)) // 복사본 생성 후 using
+                    using (SKPath eraserPathCopy = new SKPath(_eraserPath))       // 복사본 생성 후 using
                     {
-                        if (newPath.IsEmpty)
+                        // 1단계: Intersection Op으로 실제 겹침 여부 확인
+                        using (var intersectionResultPath = new SKPath())
                         {
-                            // 완전히 지워진 경우: 리스트에서 제거 및 R-tree에서도 제거
-                            _completelyRemovedObjects.Add((drawingObject, oldPath, originalIndex));
-                            _drawingObjects.RemoveAt(originalIndex); // ObservableCollection에서 제거 -> CollectionChanged 이벤트 발생 -> R-tree에서도 제거
-                                                                     // _spatialIndex.Delete(drawingObject); // CollectionChanged 이벤트 핸들러에서 처리되므로 여기서는 불필요
+                            if (!currentPathCopy.Op(eraserPathCopy, SKPathOp.Intersect, intersectionResultPath) || intersectionResultPath.IsEmpty)
+                            {
+                                return; // 겹치지 않으면 종료
+                            }
                         }
-                        else
+
+                        // 2단계: Difference Op 연산 수행
+                        // oldPath는 여기서 생성하고, EraseOperationResult에 전달 후 Dispose() 책임은 EraseOperationResult가 가짐
+                        SKPath oldPathForResult = new SKPath(currentPathCopy);
+
+                        using (var tempNewPath = new SKPath()) // Op 연산 결과로 받을 임시 Path
                         {
-                            // 부분적으로 지워진 경우: Path 업데이트 및 R-tree 업데이트
-                            _partiallyModifiedObjects.Add((drawingObject, oldPath));
-                            drawingObject.UpdatePath(newPath);
-                            context.UpdateIndex(drawingObject); // R-tree에서 업데이트
+                            if (currentPathCopy.Op(eraserPathCopy, SKPathOp.Difference, tempNewPath))
+                            {
+                                // EraseOperationResult에 저장할 newPath는 tempNewPath의 복사본이어야 합니다.
+                                // 그래야 tempNewPath가 using 블록을 벗어나도 EraseOperationResult가 유효한 Path를 가집니다.
+                                SKPath newPathForResult = new SKPath(tempNewPath); // 복사본 생성
+
+                                lock (lockObject)
+                                {
+                                    resultsToApply.Add(new EraseOperationResult(drawingObject, oldPathForResult, newPathForResult, originalIndex));
+                                }
+                            }
+                            else
+                            {
+                                // Op 연산 실패 시, 생성된 oldPathForResult도 여기서 Dispose()
+                                oldPathForResult?.Dispose();
+                            }
                         }
+                    } // currentPathCopy, eraserPathCopy는 여기서 Dispose됨
+                });
+
+                opTasks.Add(opTask);
+            }
+
+            await Task.WhenAll(opTasks);
+
+            _dispatcher.Invoke(() =>
+            {
+                // 모든 연산 결과를 _lastExecutedResults에 저장 (Undo/Redo를 위한)
+                _lastExecutedResults.AddRange(resultsToApply.OrderByDescending(r => r.OriginalIndex));
+
+                // _drawingObjects 컬렉션에 변경 사항 반영
+                foreach (var result in _lastExecutedResults) // 이미 역순으로 정렬됨
+                {
+                    if (result.IsCompletelyErased)
+                    {
+                        _drawingObjects.RemoveAt(result.OriginalIndex);
+                    }
+                    else
+                    {
+                        result.TargetObject.UpdatePath(result.NewPath); // NewPath는 이제 EraseOperationResult가 소유
+                        context.UpdateIndex(result.TargetObject);
                     }
                 }
-            }
-            context.InvalidateVisual(); // UI 갱신
+
+                context.InvalidateVisual();
+            });
         }
 
         public void Undo()
         {
-            // 1. 부분적으로 지워졌던 객체 복원 (최근 변경된 객체부터)
-            foreach (var item in _partiallyModifiedObjects.AsEnumerable().Reverse())
+            _dispatcher.Invoke(() =>
             {
-                item.obj.UpdatePath(item.oldPath); // 이전 Path로 복원
-                context.UpdateIndex(item.obj);
-            }
-            _partiallyModifiedObjects.Clear();
+                // Path가 변경된 객체부터 복원 (이전 상태로 되돌림)
+                foreach (var result in _lastExecutedResults.Where(r => !r.IsCompletelyErased).Reverse())
+                {
+                    result.TargetObject.UpdatePath(result.OldPath); // OldPath는 이제 EraseOperationResult가 소유
+                    context.UpdateIndex(result.TargetObject);
+                }
 
-            // 2. 완전히 지워졌던 객체 복원 (원래 인덱스 순서대로)
-            foreach (var item in _completelyRemovedObjects.OrderBy(x => x.originalIndex))
-            {
-                item.obj.UpdatePath(item.oldPath); // 지워지기 전의 Path로 복원
-                _drawingObjects.Insert(item.originalIndex, item.obj); // 리스트에 다시 삽입 -> CollectionChanged 이벤트 발생 -> R-tree에도 추가
-                                                                      // _spatialIndex.Insert(item.obj); // CollectionChanged 이벤트 핸들러에서 처리되므로 여기서는 불필요
-            }
-            _completelyRemovedObjects.Clear();
+                // 완전히 제거된 객체들을 복원 (원래 인덱스 오름차순으로 삽입)
+                foreach (var result in _lastExecutedResults.Where(r => r.IsCompletelyErased).OrderBy(r => r.OriginalIndex))
+                {
+                    result.TargetObject.UpdatePath(result.OldPath); // OldPath는 이제 EraseOperationResult가 소유
+                    _drawingObjects.Insert(result.OriginalIndex, result.TargetObject);
+                }
 
-            context.InvalidateVisual(); // UI 갱신
+                // Undo 완료 후, _lastExecutedResults에 저장된 SKPath 객체들을 Dispose
+                // (실제 Undo/Redo 스택에서는 이 명령 객체가 Redo 스택으로 이동하면 Dispose하지 않고,
+                // 완전히 스택에서 벗어날 때 Dispose하는 로직이 필요함)
+                foreach (var result in _lastExecutedResults)
+                {
+                    result.Dispose();
+                }
+                _lastExecutedResults.Clear();
+            });
         }
 
 

@@ -8,14 +8,14 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <StackPanel Orientation="Vertical">
-            <TextBlock Text="저장 경로" />
-            <StackPanel Margin="10">
-                <TextBlock Text="녹화 영상" />
-                <TextBlock Text="{Binding VideoSavePath}" />
+            <TextBlock Text="저장 경로" Margin="10"/>
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <TextBlock Text="동영상" Margin="10"/>
+                <TextBlock Text="{Binding VideoSavePath}" Margin="10"/>
             </StackPanel>
-            <StackPanel Margin="10">
-                <TextBlock Text="스크린샷" />
-                <TextBlock Text="{Binding ImageSavePath}" />
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <TextBlock Text="스크린샷" Margin="10"/>
+                <TextBlock Text="{Binding ImageSavePath}" Margin="10"/>
             </StackPanel>
         </StackPanel>
     </Grid>

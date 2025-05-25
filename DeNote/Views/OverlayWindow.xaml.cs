@@ -51,6 +51,7 @@ namespace DeNote.Views
 
         private IntPtr _windowHandle;
         private HwndSource _source;
+        private HwndSourceHook _sourceHook;
 
         public OverlayWindow()
         {
@@ -58,7 +59,6 @@ namespace DeNote.Views
 
             this.Loaded += OverlayWindow_Loaded;
             this.Closing += OverlayWindow_Closing;
-            this.Activated += OverlayWindow_Activated;
 
             DrawingCanvasControl.CloseRequested += (s, e) => HideToTray();
         }
@@ -68,42 +68,22 @@ namespace DeNote.Views
             // 창 핸들 가져오기
             _windowHandle = new WindowInteropHelper(this).Handle;
             _source = HwndSource.FromHwnd(_windowHandle);
-            _source.AddHook(HwndHook);
-
-            // 글로벌 핫키 등록 (Ctrl+Shift+F)
-            RegisterHotKey(_windowHandle, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, VK_F);
+            _sourceHook = new HwndSourceHook(HwndHook);
+            this.PreviewKeyDown += OverlayWindow_PreviewKeyDown;
         }
 
         private void OverlayWindow_Closing(object? sender, CancelEventArgs e)
         {
-            // 핫키 등록 해제
-            UnregisterHotKey(_windowHandle, HOTKEY_ID);
-
-            // HwndSource 정리
-            _source?.RemoveHook(HwndHook);
-            _source?.Dispose();
-        }
-
-        private void OverlayWindow_Activated(object? sender, EventArgs e)
-        {
-
-        }
-
-        private void ToggleWindowVisibility()
-        {
-            if (Visibility == Visibility.Visible)
-            {
-                HideToTray();
-            }
-            else
-            {
-                ShowFromTray();
-            }
+            Dispose();
         }
 
         private void HideToTray()
         {
             // 창 숨기기
+            // 글로벌 핫키 등록 (Ctrl+Shift+F)
+            this.PreviewKeyDown -= OverlayWindow_PreviewKeyDown;
+            RegisterHotKey(_windowHandle, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT, VK_F);
+            _source.AddHook(_sourceHook);
             Hide();
         }
 
@@ -111,6 +91,11 @@ namespace DeNote.Views
         {
             // 창 보이기
             Show();
+            // 핫키 등록 해제
+            _source?.RemoveHook(_sourceHook);
+            UnregisterHotKey(_windowHandle, HOTKEY_ID);
+            this.PreviewKeyDown += OverlayWindow_PreviewKeyDown;
+
             DrawingCanvasControl.ReloadCanvas();
             WindowState = WindowState.Maximized;
             Activate();
@@ -141,7 +126,7 @@ namespace DeNote.Views
             // 핫키 메시지 처리
             if (msg == WM_HOTKEY && wParam.ToInt32() == HOTKEY_ID)
             {
-                ToggleWindowVisibility();
+                ShowFromTray();
                 handled = true;
             }
             return IntPtr.Zero;
@@ -153,8 +138,25 @@ namespace DeNote.Views
             // 핫키 등록 해제
             UnregisterHotKey(_windowHandle, HOTKEY_ID);
             // HwndSource 정리
-            _source?.RemoveHook(HwndHook);
+            _source?.RemoveHook(_sourceHook);
             _source?.Dispose();
+        }
+
+        private void OverlayWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Q && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                Application.Current?.Shutdown();
+            }
+            else if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            {
+                HideToTray();
+                e.Handled = true;
+            }
+            else
+            {
+                DrawingCanvasControl.OnPreviewKeyDown(sender, e);
+            }
         }
     }
 }

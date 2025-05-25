@@ -63,6 +63,7 @@ namespace DeNote.Views
             PaintSurface += OnPaintSurface;
         }
 
+
         private async void QIDrawingCanvasControl_Loaded(object sender, RoutedEventArgs e)
         {
             await CaptureBackgroundAsync();
@@ -231,7 +232,8 @@ namespace DeNote.Views
             else
             {
                 this.backgroundOption = BackgroundOption.Capture;
-                await CaptureBackgroundAsync();
+                InvalidateVisual();
+                // await CaptureBackgroundAsync();
             }
         }
 

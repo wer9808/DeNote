@@ -7,6 +7,32 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-            
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="단축키" Margin="10"/>
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <TextBlock Text="프로그램 종료" Margin="10"/>
+                <TextBlock Text="Ctrl+Q" Margin="10"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <TextBlock Text="창 숨기기/보이기" Margin="10"/>
+                <TextBlock Text="Ctrl+Shift+F" Margin="10"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <TextBlock Text="초기화" Margin="10"/>
+                <TextBlock Text="F5" Margin="10"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <TextBlock Text="배경 새로고침" Margin="10"/>
+                <TextBlock Text="F6" Margin="10"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <TextBlock Text="배경 끄기/켜기" Margin="10"/>
+                <TextBlock Text="F7" Margin="10"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="10,0">
+                <TextBlock Text="스크린샷 촬영" Margin="10"/>
+                <TextBlock Text="PrintScreen" Margin="10"/>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </UserControl>

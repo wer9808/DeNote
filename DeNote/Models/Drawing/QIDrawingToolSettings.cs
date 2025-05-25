@@ -55,6 +55,12 @@ namespace DeNote.Models
             public SKStrokeJoin StrokeJoin { get; set; } = SKStrokeJoin.Round;
             public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver;
 
+            public QIHighlighterToolSettings()
+            {
+                // 기본 색상은 노란색으로 설정
+                Color = SKColors.Yellow;
+            }
+
             public override QIDrawingToolSettings Clone()
             {
                 return new QIHighlighterToolSettings
@@ -76,6 +82,12 @@ namespace DeNote.Models
             public SKColor FillColor { get; set; } = SKColors.Transparent;
             public bool FillOption { get; set; }
             public Drawing.QIShapeType Type { get; set; } = Drawing.QIShapeType.Rectangle;
+
+            public QIShapeToolSettings()
+            {
+                // 기본 색상은 검정색으로 설정
+                Color = SKColors.Black;
+            }
 
             public override QIDrawingToolSettings Clone()
             {

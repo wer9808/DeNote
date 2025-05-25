@@ -22,7 +22,7 @@ using Size = System.Windows.Size;
 namespace DeNote.Models.Drawing
 {
 
-    public abstract class QIDrawingObject : ISpatialData
+    public abstract class QIDrawingObject : ISpatialData, IDisposable
     {
         public string Id { get; set; } = Guid.NewGuid().ToString(); // Unique identifier for the object
         public DateTime CreationTime { get; set; } = DateTime.Now; // Timestamp of when the object was created
@@ -59,9 +59,15 @@ namespace DeNote.Models.Drawing
 
         public virtual void UpdatePath(SKPath path)
         {
-            Path = path;
+            Path = new SKPath(path);
             UpdateEnvelope();
             IsDirty = true;
+        }
+
+        public void Dispose()
+        {
+            Path?.Dispose();
+            CachedBitmap?.Dispose();
         }
 
         public virtual bool IsEmpty => Path == null || Path.IsEmpty;
