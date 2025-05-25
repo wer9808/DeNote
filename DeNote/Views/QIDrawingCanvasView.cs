@@ -32,7 +32,7 @@ namespace DeNote.Views
         private float defaultPressure = 1.0f; // 기본 압력 값
 
         private BackgroundOption backgroundOption = BackgroundOption.Capture;
-        private SKBitmap _backgroundBitmap;
+        private SKBitmap? _backgroundBitmap;
         private bool _isBackgroundCaptured = false;
         public bool IsBackgroundCaptured => _isBackgroundCaptured;
         public bool IsCapturing { get; private set; }
@@ -57,7 +57,10 @@ namespace DeNote.Views
             this.Unloaded += QIDrawingCanvasControl_Unloaded;
 
             // 이벤트 연결
-            drawingContext.VisualInvalidated += (s, e) => InvalidateVisual();
+            drawingContext.VisualInvalidated += (s, e) =>
+            {
+                App.Current.Dispatcher.Invoke(() => InvalidateVisual());
+            };
             toolManager.ToolChanged += OnToolChanged;
 
             PaintSurface += OnPaintSurface;
@@ -222,7 +225,7 @@ namespace DeNote.Views
             });
         }
 
-        public async Task ToggleBackgroundOption()
+        public void ToggleBackgroundOption()
         {
             if (this.backgroundOption == BackgroundOption.Capture)
             {
@@ -244,7 +247,7 @@ namespace DeNote.Views
         }
 
         // 도구 변경 처리
-        private void OnToolChanged(object sender, ToolChangedEventArgs e)
+        private void OnToolChanged(object? sender, ToolChangedEventArgs e)
         {
             ToolChanged?.Invoke(this, e);
         }
@@ -260,9 +263,9 @@ namespace DeNote.Views
         }
 
         // 현재 도구 설정 가져오기
-        public QIDrawingToolSettings GetCurrentToolSettings()
+        public QIDrawingToolSettings? GetCurrentToolSettings()
         {
-            return toolManager.GetCurrentSettings();
+            return toolManager?.GetCurrentSettings();
         }
 
         // 도구 설정 업데이트
@@ -271,65 +274,10 @@ namespace DeNote.Views
             toolManager.UpdateToolSettings(settings);
         }
 
-        // 입력 이벤트 처리
-        protected override void OnTouchDown(TouchEventArgs e)
-        {
-            if (toolManager.ActiveToolType == QIDrawingToolType.Pen)
-            {
-                var penToolSettings = toolManager.GetCurrentSettings() as QIPenToolSettings;
-                if (penToolSettings != null)
-                {
-                    penToolSettings.PressureEnabled = false;
-                    toolManager.UpdateToolSettings(penToolSettings);
-                }
-            }
-
-            var point = e.GetTouchPoint(this).Position;
-
-            toolManager.HandleInput(new QIDrawingInputData
-            {
-                Type = QIDrawingInputType.Down,
-                X = (float)point.X,
-                Y = (float)point.Y,
-                Pressure = defaultPressure
-            });
-
-            e.Handled = true;
-        }
-
-        protected override void OnTouchMove(TouchEventArgs e)
-        {
-            var point = e.GetTouchPoint(this).Position;
-
-            toolManager.HandleInput(new QIDrawingInputData
-            {
-                Type = QIDrawingInputType.Move,
-                X = (float)point.X,
-                Y = (float)point.Y,
-                Pressure = defaultPressure
-            });
-
-            e.Handled = true;
-        }
-
-        protected override void OnTouchUp(TouchEventArgs e)
-        {
-            var point = e.GetTouchPoint(this).Position;
-
-            toolManager.HandleInput(new QIDrawingInputData
-            {
-                Type = QIDrawingInputType.Up,
-                X = (float)point.X,
-                Y = (float)point.Y,
-                Pressure = defaultPressure
-            });
-
-            e.Handled = true;
-        }
-
         // 마우스 이벤트도 처리
-        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        protected override async void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         {
+            if (!drawingContext.CanExecute) return;
             if (e.StylusDevice != null) return;
 
             if (toolManager.ActiveToolType == QIDrawingToolType.Pen)
@@ -341,10 +289,9 @@ namespace DeNote.Views
                     toolManager.UpdateToolSettings(penToolSettings);
                 }
             }
-
             var point = e.GetPosition(this);
 
-            toolManager.HandleInput(new QIDrawingInputData
+            await toolManager.HandleInput(new QIDrawingInputData
             {
                 Type = QIDrawingInputType.Down,
                 X = (float)point.X,
@@ -352,19 +299,20 @@ namespace DeNote.Views
                 Pressure = defaultPressure  // 마우스는 필압 정보 없음
             });
 
+            drawingContext.IsDrawing = true;
             e.Handled = true;
             CaptureMouse();
         }
 
-        protected override void OnMouseMove(MouseEventArgs e)
+        protected override async void OnMouseMove(MouseEventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
+            if (drawingContext.IsDrawing)
             {
                 if (e.StylusDevice != null) return;
 
                 var point = e.GetPosition(this);
 
-                toolManager.HandleInput(new QIDrawingInputData
+                await toolManager.HandleInput(new QIDrawingInputData
                 {
                     Type = QIDrawingInputType.Move,
                     X = (float)point.X,
@@ -376,13 +324,14 @@ namespace DeNote.Views
             }
         }
 
-        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        protected override async void OnMouseLeftButtonUp(MouseButtonEventArgs e)
         {
+            if (!drawingContext.IsDrawing) return;
             if (e.StylusDevice != null) return;
 
             var point = e.GetPosition(this);
 
-            toolManager.HandleInput(new QIDrawingInputData
+            await toolManager.HandleInput(new QIDrawingInputData
             {
                 Type = QIDrawingInputType.Up,
                 X = (float)point.X,
@@ -390,6 +339,7 @@ namespace DeNote.Views
                 Pressure = defaultPressure
             });
 
+            drawingContext.IsDrawing = false;
             e.Handled = true;
             ReleaseMouseCapture();
         }
@@ -409,8 +359,9 @@ namespace DeNote.Views
             e.Handled = true;
         }
 
-        protected override void OnStylusDown(StylusDownEventArgs e)
+        protected override async void OnStylusDown(StylusDownEventArgs e)
         {
+            if (!drawingContext.CanExecute) return;
             if (toolManager.ActiveToolType == QIDrawingToolType.Pen)
             {
                 var penToolSettings = toolManager.GetCurrentSettings() as QIPenToolSettings;
@@ -435,7 +386,7 @@ namespace DeNote.Views
                 Y = (float)point.Y,
                 Pressure = point.PressureFactor
             };
-            toolManager.HandleInput(input);
+            await toolManager.HandleInput(input);
 
             for (i = 1; i < points.Count; i++)
             {
@@ -447,35 +398,41 @@ namespace DeNote.Views
                     Y = (float)point.Y,
                     Pressure = point.PressureFactor
                 };
-                toolManager.HandleInput(input);
+                await toolManager.HandleInput(input);
             }
 
+            drawingContext.IsDrawing = true;
             e.Handled = true;
         }
 
-        protected override void OnStylusMove(StylusEventArgs e)
+        protected override async void OnStylusMove(StylusEventArgs e)
         {
-            var points = e.GetStylusPoints(this);
-            if (points.Count == 0)
-                return;
-            foreach (var point in points)
+            if (drawingContext.IsDrawing)
             {
-                var input = new QIDrawingInputData
+                var points = e.GetStylusPoints(this);
+                if (points.Count == 0)
+                    return;
+                foreach (var point in points)
                 {
-                    Type = QIDrawingInputType.Move,
-                    X = (float)point.X,
-                    Y = (float)point.Y,
-                    Pressure = point.PressureFactor
-                };
+                    var input = new QIDrawingInputData
+                    {
+                        Type = QIDrawingInputType.Move,
+                        X = (float)point.X,
+                        Y = (float)point.Y,
+                        Pressure = point.PressureFactor
+                    };
 
-                toolManager.HandleInput(input);
+                    await toolManager.HandleInput(input);
+                }
+
+                e.Handled = true;
             }
-
-            e.Handled = true;
         }
 
-        protected override void OnStylusUp(StylusEventArgs e)
+        protected override async void OnStylusUp(StylusEventArgs e)
         {
+            if (!drawingContext.IsDrawing) return;
+
             var points = e.GetStylusPoints(this);
             if (points.Count == 0)
                 return;
@@ -492,7 +449,7 @@ namespace DeNote.Views
                     Pressure = point.PressureFactor
                 };
 
-                toolManager.HandleInput(input);
+                await toolManager.HandleInput(input);
             }
 
             var lastPoint = points.Last();
@@ -504,24 +461,28 @@ namespace DeNote.Views
                 Pressure = lastPoint.PressureFactor
             };
 
-            toolManager.HandleInput(endInput);
+            await toolManager.HandleInput(endInput);
 
+            drawingContext.IsDrawing = false;
             e.Handled = true;
         }
 
-        public void Clear()
+        public async Task Clear()
         {
-            drawingContext.ClearObjects();
+            if (!drawingContext.CanExecute) return;
+            await drawingContext.ClearObjects();
         }
 
-        public void Undo()
+        public async Task Undo()
         {
-            drawingContext.CommandManager.Undo();
+            if (!drawingContext.CanExecute) return;
+            await drawingContext.CommandManager.Undo();
         }
 
-        public void Redo()
+        public async Task Redo()
         {
-            drawingContext.CommandManager.Redo();
+            if (!drawingContext.CanExecute) return;
+            await drawingContext.CommandManager.Redo();
         }
 
         public async Task SaveCapture()

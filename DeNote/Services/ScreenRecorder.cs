@@ -119,7 +119,7 @@ namespace DeNote.Services
             }
         }
 
-        private void OnRecordingComplete(object sender, RecordingCompleteEventArgs e)
+        private void OnRecordingComplete(object? sender, RecordingCompleteEventArgs e)
         {
             try
             {
@@ -135,7 +135,7 @@ namespace DeNote.Services
             }
         }
 
-        private void OnRecordingFailed(object sender, RecordingFailedEventArgs e)
+        private void OnRecordingFailed(object? sender, RecordingFailedEventArgs e)
         {
             try
             {
@@ -158,7 +158,7 @@ namespace DeNote.Services
             }
         }
 
-        private void OnRecordingStatusChanged(object sender, RecordingStatusEventArgs e)
+        private void OnRecordingStatusChanged(object? sender, RecordingStatusEventArgs e)
         {
             // 상태 변경 처리 (필요한 경우)
 

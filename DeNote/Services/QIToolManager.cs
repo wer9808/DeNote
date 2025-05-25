@@ -16,8 +16,8 @@ namespace DeNote.Services
         private Dictionary<QIDrawingToolType, IQIDrawingTool> _tools = new Dictionary<QIDrawingToolType, IQIDrawingTool>();
         private Dictionary<QIDrawingToolType, QIDrawingToolSettings> _settingsStore = new Dictionary<QIDrawingToolType, QIDrawingToolSettings>();
 
-        private IQIDrawingTool _activeTool = null;
-        public IQIDrawingTool ActiveTool => _activeTool;
+        private IQIDrawingTool? _activeTool = null;
+        public IQIDrawingTool? ActiveTool => _activeTool;
 
         private QIDrawingToolType _activeToolType = QIDrawingToolType.Pen;
         public QIDrawingToolType ActiveToolType
@@ -93,17 +93,17 @@ namespace DeNote.Services
         }
 
         // 입력 처리
-        public void HandleInput(QIDrawingInputData input)
+        public async Task HandleInput(QIDrawingInputData input)
         {
             if (_activeTool != null)
             {
-                _activeTool.HandleInput(input, Context);
+                await _activeTool.HandleInput(input, Context);
             }
         }
 
-        internal QIDrawingToolSettings GetCurrentSettings()
+        internal QIDrawingToolSettings? GetCurrentSettings()
         {
-            return _activeTool.GetSettings();
+            return _activeTool?.GetSettings();
         }
 
         // 이벤트

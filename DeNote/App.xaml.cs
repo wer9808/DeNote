@@ -15,7 +15,7 @@ namespace DeNote
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             _overlayWindow = new OverlayWindow();
-            _overlayWindow.Show();
+            _overlayWindow?.Show();
         }
 
         private void Application_Exit(object sender, ExitEventArgs e)

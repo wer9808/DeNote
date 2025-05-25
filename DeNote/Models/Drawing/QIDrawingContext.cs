@@ -7,18 +7,22 @@ using System.Threading.Tasks;
 using DeNote.Services;
 using SkiaSharp;
 using RBush;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DeNote.Models.Drawing
 {
-    public class QIDrawingContext
+    public class QIDrawingContext: ObservableObject
     {
         // 드로잉 객체 컬렉션
 
         // 명령 관리자 추가
         public QIDrawingCommandManager CommandManager { get; }
+        public bool CanExecute => CommandManager.CanExecute;
+
         public ObservableCollection<QIDrawingObject> Objects { get; } = new ObservableCollection<QIDrawingObject>();
         public RBush<QIDrawingObject> SpatialIndex;
 
+        public bool IsDrawing { get; set; } = false;
         public bool IsErasing { get; set; } = false;
         public SKBitmap EraserBitmap { get; set; }
         private SKPath eraserPath;
@@ -29,8 +33,8 @@ namespace DeNote.Models.Drawing
         private float canvasHeight;
 
         // 현재 활성 객체 (생성/편집 중)
-        private QIDrawingObject activeObject;
-        public QIDrawingObject ActiveObject
+        private QIDrawingObject? activeObject;
+        public QIDrawingObject? ActiveObject
         {
             get => activeObject;
             set
@@ -48,6 +52,12 @@ namespace DeNote.Models.Drawing
 
             CommandManager = new QIDrawingCommandManager(this);
             CommandManager.CommandExecuted += (s, e) => InvalidateVisual();
+            CommandManager.CommandUndone += (s, e) => InvalidateVisual();
+            CommandManager.CommandRedone += (s, e) => InvalidateVisual();
+            CommandManager.CanExecuteChanged += (s, e) =>
+            {
+                OnPropertyChanged(nameof(CanExecute));
+            };
 
             this.ObjectAdded += OnObjectAdded;
             this.ObjectRemoved += OnObjectRemoved;
@@ -94,15 +104,16 @@ namespace DeNote.Models.Drawing
             SpatialIndex.Insert(obj);
         }
 
-        public void AddDrawingObject(QIDrawingObject obj)
+        public async Task AddDrawingObject(QIDrawingObject obj)
         {
-            CommandManager.AddObject(obj);
+            var addCommand = new AddDrawingCommand(this, obj);
+            await CommandManager.Execute(addCommand);
         }
 
-        public void ClearObjects()
+        public async Task ClearObjects()
         {
             var clearCommand = new ClearCommand(this);
-            CommandManager.ExecuteCommand(clearCommand);
+            await CommandManager.Execute(clearCommand);
         }
 
         // 화면 갱신 요청
@@ -160,18 +171,20 @@ namespace DeNote.Models.Drawing
             }
         }
 
-        public void EndErasing()
+        public async Task EndErasing()
         {
             if (IsErasing)
             {
-                EraseActualObjects();
-                IsErasing = false;
-                EraserBitmap.Dispose();
-                InvalidateVisual();
+                await EraseActualObjects().ContinueWith(x =>
+                {
+                    IsErasing = false;
+                    EraserBitmap.Dispose();
+                    InvalidateVisual();
+                });
             }
         }
 
-        private void EraseActualObjects()
+        private async Task EraseActualObjects()
         {
             var actualEraserPath = eraserPaint.GetFillPath(eraserPath);
             var eraserBounds = actualEraserPath.ComputeTightBounds();
@@ -180,7 +193,7 @@ namespace DeNote.Models.Drawing
             // var intersectingObjects = QuadTree.Retrieve(Objects.ToList(), eraserBounds);
 
             var eraseCommand = new EraseCommand(this, actualEraserPath);
-            CommandManager.ExecuteCommand(eraseCommand);
+            await CommandManager.Execute(eraseCommand);
         }
 
         // 이벤트

@@ -76,7 +76,7 @@ namespace DeNote.Views
             TriangleBtn.Background = Brushes.White;
             LineBtn.Background = Brushes.White;
 
-            var shapeType = settings.Type;
+            var shapeType = settings!.Type;
             switch (shapeType)
             {
                 case QIShapeType.Rectangle:
@@ -348,7 +348,7 @@ namespace DeNote.Views
         }
 
 
-        private void OnMenuRequested(object sender, QIDrawingCanvasView.MenuRequestedEventArgs e)
+        private void OnMenuRequested(object? sender, QIDrawingCanvasView.MenuRequestedEventArgs e)
         {
 
             var requestType = e.MenuRequestType;

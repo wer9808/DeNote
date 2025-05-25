@@ -46,7 +46,7 @@ namespace DeNote.Utils
         /// <returns>부모 Window 또는 찾지 못한 경우 MainWindow</returns>
         public static Window GetParentWindowOrMainWindow(this UIElement element)
         {
-            Window window = GetParentWindow(element);
+            Window? window = GetParentWindow(element);
 
             // 부모 Window를 찾지 못했으면 MainWindow 반환
             return window ?? Application.Current.MainWindow;

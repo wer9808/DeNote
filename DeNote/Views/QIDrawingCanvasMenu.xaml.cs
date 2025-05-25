@@ -25,7 +25,7 @@ namespace DeNote.Views
         private QIDrawingCanvasView _canvasView;
 
         private ScreenRecorder screenRecorder = new ScreenRecorder();
-        private AppConfigWindow _appConfigWindow;
+        private AppConfigWindow? _appConfigWindow;
         public QIDrawingCanvasMenu()
         {
             InitializeComponent();
@@ -42,18 +42,18 @@ namespace DeNote.Views
         }
 
 
-        private void UndoBtn_Click(object sender, RoutedEventArgs e)
+        private async void UndoBtn_Click(object sender, RoutedEventArgs e)
         {
-            _canvasView.Undo();
+            await _canvasView.Undo();
         }
 
-        private void RedoBtn_Click(object sender, RoutedEventArgs e)
+        private async void RedoBtn_Click(object sender, RoutedEventArgs e)
         {
-            _canvasView.Redo();
+            await _canvasView.Redo();
         }
-        private void ClearDrawingBtn_Click(object sender, RoutedEventArgs e)
+        private async void ClearDrawingBtn_Click(object sender, RoutedEventArgs e)
         {
-            _canvasView.Clear();
+            await _canvasView.Clear();
         }
 
         private void RecordBtn_Click(object sender, RoutedEventArgs e)
@@ -69,10 +69,10 @@ namespace DeNote.Views
                 RecordBtn.Content = "⏹️";
             }
         }
-        private async void ToggleBackgroundBtn_Click(object sender, RoutedEventArgs e)
+        private void ToggleBackgroundBtn_Click(object sender, RoutedEventArgs e)
         {
             if (_canvasView == null) return;
-            await _canvasView.ToggleBackgroundOption();
+            _canvasView.ToggleBackgroundOption();
         }
 
         private async void SaveBtn_Click(object sender, RoutedEventArgs e)

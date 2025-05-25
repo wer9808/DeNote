@@ -47,18 +47,18 @@ namespace DeNote.Views
                 // Ctrl+Shift+Z가 아닌 경우에만 처리
                 if ((Keyboard.Modifiers & ModifierKeys.Shift) != ModifierKeys.Shift)
                 {
-                    DrawingCanvasView.Undo(); // Undo 작업 수행
+                    await DrawingCanvasView.Undo(); // Undo 작업 수행
                 }
                 else if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
                 {
                     // Ctrl+Shift+Z는 다른 곳에서 처리
-                    DrawingCanvasView.Redo(); // Redo 작업 수행
+                    await DrawingCanvasView.Redo(); // Redo 작업 수행
                 }
             }
 
             else if (e.Key == Key.F5)
             {
-                DrawingCanvasView.Clear();
+                await DrawingCanvasView.Clear();
                 await DrawingCanvasView.CaptureBackgroundAsync();
             }
 
@@ -69,7 +69,7 @@ namespace DeNote.Views
 
             else if (e.Key == Key.F7)
             {
-                await DrawingCanvasView.ToggleBackgroundOption();
+                DrawingCanvasView.ToggleBackgroundOption();
             }
 
             else if (e.Key == Key.PrintScreen)

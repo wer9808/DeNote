@@ -44,7 +44,7 @@ namespace DeNote.Models.Drawing
     {
         QIDrawingToolType Type { get; }
         QIDrawingObject CreateDrawingObject();
-        void HandleInput(QIDrawingInputData input, QIDrawingContext context);
+        Task HandleInput(QIDrawingInputData input, QIDrawingContext context);
         void ApplySettings(QIDrawingToolSettings settings);
         QIDrawingToolSettings GetSettings();
     }
@@ -53,7 +53,7 @@ namespace DeNote.Models.Drawing
     {
         public QIDrawingToolType Type => QIDrawingToolType.Pen;
         private QIPenToolSettings Settings { get; set; } = new QIPenToolSettings();
-        private QIPenStroke CurrentStroke { get; set; }
+        private QIPenStroke? CurrentStroke { get; set; }
 
         public QIDrawingObject CreateDrawingObject()
         {
@@ -68,7 +68,7 @@ namespace DeNote.Models.Drawing
             };
         }
 
-        public void HandleInput(QIDrawingInputData input, QIDrawingContext context)
+        public async Task HandleInput(QIDrawingInputData input, QIDrawingContext context)
         {
             // Handle input for pen tool
 
@@ -96,7 +96,7 @@ namespace DeNote.Models.Drawing
                     {
                         AddPoint(CurrentStroke, input);
                         FinalizeStroke(CurrentStroke);
-                        context.AddDrawingObject(CurrentStroke);
+                        await context.AddDrawingObject(CurrentStroke);
                         CurrentStroke = null;
                         context.ActiveObject = null;
                     }
@@ -143,7 +143,7 @@ namespace DeNote.Models.Drawing
     {
         public QIDrawingToolType Type => QIDrawingToolType.Highlighter;
         private QIHighlighterToolSettings Settings { get; set; } = new QIHighlighterToolSettings();
-        private QIHighlighter CurrentStroke { get; set; }
+        private QIHighlighter? CurrentStroke { get; set; }
 
         // 펜 도구와 유사한 구현...
 
@@ -163,7 +163,7 @@ namespace DeNote.Models.Drawing
 
 
 
-        public void HandleInput(QIDrawingInputData input, QIDrawingContext context)
+        public async Task HandleInput(QIDrawingInputData input, QIDrawingContext context)
         {
             // Handle input for pen tool
 
@@ -191,7 +191,7 @@ namespace DeNote.Models.Drawing
                     {
                         AddPoint(CurrentStroke, input);
                         FinalizeStroke(CurrentStroke);
-                        context.AddDrawingObject(CurrentStroke);
+                        await context.AddDrawingObject(CurrentStroke);
                         CurrentStroke = null;
                         context.ActiveObject = null;
                     }
@@ -238,7 +238,7 @@ namespace DeNote.Models.Drawing
     {
         public QIDrawingToolType Type => QIDrawingToolType.Shape;
         private QIShapeToolSettings Settings { get; set; } = new QIShapeToolSettings();
-        private QIShape CurrentShape { get; set; }
+        private QIShape? CurrentShape { get; set; }
         private SKPoint StartPoint { get; set; }
         private SKPoint EndPoint { get; set; }
 
@@ -254,7 +254,7 @@ namespace DeNote.Models.Drawing
             };
         }
 
-        public void HandleInput(QIDrawingInputData input, QIDrawingContext context)
+        public async Task HandleInput(QIDrawingInputData input, QIDrawingContext context)
         {
             switch (input.Type)
             {
@@ -283,7 +283,7 @@ namespace DeNote.Models.Drawing
                     {
                         EndPoint = new SKPoint(input.X, input.Y);
                         UpdateShapePath();
-                        context.AddDrawingObject(CurrentShape);
+                        await context.AddDrawingObject(CurrentShape);
                         CurrentShape = null;
                         context.ActiveObject = null;
                     }
@@ -333,7 +333,7 @@ namespace DeNote.Models.Drawing
                     break;
             }
 
-            CurrentShape.UpdateShape(shapePath);
+            CurrentShape?.UpdateShape(shapePath);
         }
 
         public void ApplySettings(QIDrawingToolSettings settings)
@@ -360,7 +360,7 @@ namespace DeNote.Models.Drawing
             throw new NotImplementedException();
         }
 
-        public void HandleInput(QIDrawingInputData input, QIDrawingContext context)
+        public async Task HandleInput(QIDrawingInputData input, QIDrawingContext context)
         {
             var point = new QIPoint
             {
@@ -378,7 +378,7 @@ namespace DeNote.Models.Drawing
                     context.UpdateErasing(point);
                     break;
                 case QIDrawingInputType.Up:
-                    context.EndErasing();
+                    await context.EndErasing();
                     break;
             }
         }

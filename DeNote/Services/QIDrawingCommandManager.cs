@@ -20,15 +20,19 @@ namespace DeNote.Services
 
         private readonly QIDrawingContext context;
 
+        private bool _canExecute = true;
+        public bool CanExecute => _canExecute;
+
         public QIDrawingCommandManager(QIDrawingContext context)
         {
             this.context = context;
         }
 
         // 명령 실행
-        public void ExecuteCommand(QIDrawingCommand command)
+        public async Task Execute(QIDrawingCommand command)
         {
-            command.Execute();
+            await Task.Run(() => command.Execute(null));
+
             // 스택 크기 제한 적용
             if (undoList.Count >= maxStackSize)
             {
@@ -38,40 +42,37 @@ namespace DeNote.Services
 
             undoList.AddLast(command);
             redoList.Clear(); // 새 명령이 실행되면 redo 스택은 초기화
-            CommandExecuted?.Invoke(this, EventArgs.Empty);
         }
 
         // Undo 실행
         public bool CanUndo => undoList.Count > 0;
 
-        public void Undo()
+        public async Task Undo()
         {
             if (!CanUndo) return;
 
-            var command = undoList.Last.Value;
+            var command = undoList.Last!.Value;
             undoList.RemoveLast();
 
-            command.Undo();
+            await command.Undo();
             redoList.AddLast(command);
 
             CommandUndone?.Invoke(this, EventArgs.Empty);
-            context.InvalidateVisual();
         }
 
         // Redo 실행
         public bool CanRedo => redoList.Count > 0;
-        public void Redo()
+        public async Task Redo()
         {
             if (!CanRedo) return;
 
-            var command = redoList.Last.Value;
+            var command = redoList.Last!.Value;
             redoList.RemoveLast();
 
-            command.Execute();
+            await command.Redo();
             undoList.AddLast(command);
 
             CommandRedone?.Invoke(this, EventArgs.Empty);
-            context.InvalidateVisual();
         }
 
         // 이벤트
@@ -79,16 +80,14 @@ namespace DeNote.Services
         public event EventHandler CommandUndone;
         public event EventHandler CommandRedone;
 
-        // 특정 타입의 객체만 처리하는 팩토리 메서드
-        public void AddObject(QIDrawingObject obj)
-        {
-            ExecuteCommand(new AddDrawingCommand(context, obj));
-        }
+        // UI에 CanUndo/CanRedo 상태 변경을 알리기 위한 이벤트
+        public event EventHandler CanExecuteChanged;
 
-        // 복합 명령 생성을 위한 메서드
-        public CompositeCommand CreateCompositeCommand()
+        public void RaiseCanExecuteChanged(bool canExecute)
         {
-            return new CompositeCommand(context);
+            // CommandManager.InvalidateRequerySuggested(); 를 호출하여 WPF 바인딩 갱신
+            _canExecute = canExecute;
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty); // 직접 이벤트 발생 (옵션)
         }
 
         // 모든 명령 스택 초기화

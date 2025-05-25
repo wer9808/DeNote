@@ -38,7 +38,7 @@ namespace DeNote.Services
         {
             return await Task.Run(() =>
             {
-                SKBitmap result = null;
+                SKBitmap? result = null;
 
                 try
                 {
@@ -89,7 +89,7 @@ namespace DeNote.Services
         {
             return await Task.Run(() =>
             {
-                SKBitmap result = null;
+                SKBitmap? result = null;
 
                 try
                 {
