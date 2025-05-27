@@ -378,7 +378,7 @@ namespace DeNote.Models.Drawing
                     context.UpdateErasing(point);
                     break;
                 case QIDrawingInputType.Up:
-                    await context.EndErasing();
+                    await context.EraseActualObjects();
                     break;
             }
         }

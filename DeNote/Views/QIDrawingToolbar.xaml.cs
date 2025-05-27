@@ -1,8 +1,4 @@
-﻿using DeNote.Models.DeNote.Models;
-using DeNote.Models.Drawing;
-using DeNote.Services;
-using SkiaSharp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +12,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using DeNote.Models.DeNote.Models;
+using DeNote.Models.Drawing;
+using DeNote.Services;
+using SkiaSharp;
 
 namespace DeNote.Views
 {
@@ -49,22 +49,6 @@ namespace DeNote.Views
             UpdateColorPreview();
             UpdateToolButtonStates();
         }
-
-
-        private void PenBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (_canvasView == null) return;
-            _canvasView.ChangeTool(QIDrawingToolType.Pen);
-            UpdateColorPreview();
-        }
-
-        private void HighlighterBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (_canvasView == null) return;
-            _canvasView.ChangeTool(QIDrawingToolType.Highlighter);
-            UpdateColorPreview();
-        }
-
 
         private void UpdateShapeButtonsState()
         {
@@ -158,56 +142,38 @@ namespace DeNote.Views
             if (_canvasView == null) return;
             var toolType = _canvasView.GetCurrentToolType();
 
-            if (toolType == QIDrawingToolType.Shape)
-            {
-                // 이미 도형 도구가 선택된 경우
-                // 도형 선택 팝업 열기
-                InitializeShapePickerPopup();
-                ShapePickerPopup.IsOpen = !ShapePickerPopup.IsOpen;
-            }
-            else
-            {
-                // 도형 도구로 변경
-                _canvasView.ChangeTool(QIDrawingToolType.Shape);
+            if (toolType != QIDrawingToolType.Shape) return;
 
-                UpdateColorPreview();
-            }
+            // 이미 도형 도구가 선택된 경우
+            // 도형 선택 팝업 열기
+            InitializeShapePickerPopup();
+            ShapePickerPopup.IsOpen = !ShapePickerPopup.IsOpen;
         }
-
-        private void EraserBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (_canvasView == null) return;
-            _canvasView.ChangeTool(QIDrawingToolType.Eraser);
-            UpdateColorPreview();
-        }
-
 
         private void UpdateToolButtonStates()
         {
             if (_canvasView == null) return;
             // 모든 버튼의 배경을 초기화
-            PenBtn.Background = Brushes.Transparent;
-            HighlighterBtn.Background = Brushes.Transparent;
-            ShapeBtn.Background = Brushes.Transparent;
-            EraserBtn.Background = Brushes.Transparent;
-
             var toolType = _canvasView.GetCurrentToolType();
             var selectedColor = Brushes.Orange;
+
+            var buttonTextBlock = DrawingToolPickerBtn.Content as TextBlock;
+
 
             // 선택된 버튼의 배경만 변경
             switch (toolType)
             {
                 case QIDrawingToolType.Pen:
-                    PenBtn.Background = selectedColor;
+                    buttonTextBlock.Text = "✏️";
                     break;
                 case QIDrawingToolType.Highlighter:
-                    HighlighterBtn.Background = selectedColor;
+                    buttonTextBlock.Text = "🖍️";
                     break;
                 case QIDrawingToolType.Shape:
-                    ShapeBtn.Background = selectedColor;
+                    buttonTextBlock.Text = "🔲";
                     break;
                 case QIDrawingToolType.Eraser:
-                    EraserBtn.Background = selectedColor;
+                    buttonTextBlock.Text = "🧽";
                     break;
             }
         }
@@ -221,24 +187,22 @@ namespace DeNote.Views
         {
             if (_canvasView == null) return;
             var toolType = _canvasView.GetCurrentToolType();
-            if (toolType == QIDrawingToolType.Pen)
-            {
-                var settings = _canvasView.GetCurrentToolSettings() as QIPenToolSettings;
-                ColorPreviewCircle.Fill = new SolidColorBrush(Color.FromArgb(settings.Color.Alpha, settings.Color.Red, settings.Color.Green, settings.Color.Blue));
-            }
-            else if (toolType == QIDrawingToolType.Highlighter)
-            {
-                var settings = _canvasView.GetCurrentToolSettings() as QIHighlighterToolSettings;
-                ColorPreviewCircle.Fill = new SolidColorBrush(Color.FromArgb(settings.Color.Alpha, settings.Color.Red, settings.Color.Green, settings.Color.Blue));
-            }
-            else if (toolType == QIDrawingToolType.Shape)
-            {
-                var settings = _canvasView.GetCurrentToolSettings() as QIShapeToolSettings;
-                ColorPreviewCircle.Fill = new SolidColorBrush(Color.FromArgb(settings.Color.Alpha, settings.Color.Red, settings.Color.Green, settings.Color.Blue));
-            }
-            else if (toolType == QIDrawingToolType.Eraser)
+
+            if (toolType == QIDrawingToolType.Eraser)
             {
                 ColorPreviewCircle.Fill = new SolidColorBrush(Colors.Transparent);
+            }
+            else
+            {
+                var settings = _canvasView.GetCurrentToolSettings() as QIDrawingToolSettings;
+                if (settings != null)
+                {
+                    ColorPreviewCircle.Fill = new SolidColorBrush(Color.FromArgb(
+                        (byte)(settings.Color.Alpha),
+                        (byte)(settings.Color.Red),
+                        (byte)(settings.Color.Green),
+                        (byte)(settings.Color.Blue)));
+                }
             }
         }
 
@@ -251,6 +215,7 @@ namespace DeNote.Views
                 ColorPickerPopup.IsOpen = false;
                 return;
             }
+            UpdateColorPreview();
             ColorPickerPopup.IsOpen = !ColorPickerPopup.IsOpen;
         }
 
@@ -282,40 +247,6 @@ namespace DeNote.Views
             ThicknessPopup.IsOpen = !ThicknessPopup.IsOpen;
         }
 
-
-        private void ColorBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (_canvasView == null) return;
-            var button = sender as Button;
-            if (button != null)
-            {
-                // 색상 선택 팝업 열기
-                var color = (Color)button.Background.GetValue(SolidColorBrush.ColorProperty);
-
-                var toolType = _canvasView.GetCurrentToolType();
-                if (toolType == QIDrawingToolType.Pen)
-                {
-                    var settings = _canvasView.GetCurrentToolSettings() as QIPenToolSettings;
-                    settings.Color = SKColor.Parse(color.ToString());
-                    _canvasView.UpdateToolSettings(settings);
-                }
-                else if (toolType == QIDrawingToolType.Highlighter)
-                {
-                    var settings = _canvasView.GetCurrentToolSettings() as QIHighlighterToolSettings;
-                    settings.Color = SKColor.Parse(color.ToString());
-                    _canvasView.UpdateToolSettings(settings);
-                }
-                else if (toolType == QIDrawingToolType.Shape)
-                {
-                    var settings = _canvasView.GetCurrentToolSettings() as QIShapeToolSettings;
-                    settings.Color = SKColor.Parse(color.ToString());
-                    _canvasView.UpdateToolSettings(settings);
-                }
-
-                // 선택된 색상으로 도구 설정 업데이트
-                UpdateColorPreview();
-            }
-        }
 
         private void ThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -367,6 +298,48 @@ namespace DeNote.Views
         public void Dispose()
         {
 
+        }
+
+        private void ColorPickerPopup_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Color> e)
+        {
+            // 색상 선택 팝업 열기
+            var color = ColorPickerPopup.SelectedColor;
+            var toolType = _canvasView.GetCurrentToolType();
+            if (toolType == QIDrawingToolType.Pen)
+            {
+                var settings = _canvasView.GetCurrentToolSettings() as QIPenToolSettings;
+                settings.Color = SKColor.Parse(color.ToString());
+                _canvasView.UpdateToolSettings(settings);
+            }
+            else if (toolType == QIDrawingToolType.Highlighter)
+            {
+                var settings = _canvasView.GetCurrentToolSettings() as QIHighlighterToolSettings;
+                settings.Color = SKColor.Parse(color.ToString());
+                _canvasView.UpdateToolSettings(settings);
+            }
+            else if (toolType == QIDrawingToolType.Shape)
+            {
+                var settings = _canvasView.GetCurrentToolSettings() as QIShapeToolSettings;
+                settings.Color = SKColor.Parse(color.ToString());
+                _canvasView.UpdateToolSettings(settings);
+            }
+
+            UpdateColorPreview();
+        }
+
+        private void DrawingToolPickerPopup_SelectedToolChanged(object sender, RoutedPropertyChangedEventArgs<QIDrawingToolType> e)
+        {
+            if (_canvasView == null) return;
+            _canvasView.ChangeTool(e.NewValue);
+            UpdateToolButtonStates();
+            UpdateColorPreview();
+        }
+
+        private void DrawingToolPickerBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (_canvasView == null) return;
+            DrawingToolPickerPopup.SelectedTool = _canvasView.GetCurrentToolType();
+            DrawingToolPickerPopup.IsOpen = !DrawingToolPickerPopup.IsOpen;
         }
     }
 }

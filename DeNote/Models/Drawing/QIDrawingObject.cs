@@ -248,6 +248,7 @@ namespace DeNote.Models.Drawing
 
     public class QIHighlighter : QIStrokeObject
     {
+        private const byte Alpha = 255;
         public SKBlendMode BlendMode { get; set; } = SKBlendMode.SrcOver; // Blend mode for the highlighter (e.g., normal, multiply, screen)
         private SKPath OriginalPath { get; set; } = new SKPath(); // Original path before any modifications
 

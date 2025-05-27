@@ -44,6 +44,15 @@ namespace DeNote.Views
         private QIToolManager toolManager;
         private QIDrawingRenderer renderer = new QIDrawingRenderer();
 
+        private DispatcherTimer _longPressTimer;
+        private QIPoint _startPosition;
+        private const double LongPressThresholdSeconds = 1.5;
+        private const float MovementThreshold = 1.0f; // 긴 누름 모니터링 중 마우스 이동 허용 범위
+        private const float StylusMovementThreshold = 5.0f; // 긴 누름 모니터링 중 마우스 이동 허용 범위
+        // True if the stylus or mouse button is currently pressed down,
+        // and a long press action has not yet been triggered or cancelled by movement.
+        private bool _isMonitoringForLongPress = false;
+
         public QIDrawingCanvasView()
         {
             float primaryScreenWidth = (float)SystemParameters.PrimaryScreenWidth;
@@ -64,8 +73,42 @@ namespace DeNote.Views
             toolManager.ToolChanged += OnToolChanged;
 
             PaintSurface += OnPaintSurface;
+
+            _longPressTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(LongPressThresholdSeconds)
+            };
+            _longPressTimer.Tick += _longPressTimer_Tick;
         }
 
+        private void _longPressTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_isMonitoringForLongPress)
+            {
+                _longPressTimer.Stop();
+                _isMonitoringForLongPress = false;
+                // 긴 누름 이벤트 발생
+                var MenuRequestedEventArgs = new MenuRequestedEventArgs
+                {
+                    MousePosition = _startPosition,
+                    MenuRequestType = MenuRequestType.Open
+                };
+                MenuRequested?.Invoke(this, MenuRequestedEventArgs);
+            }
+        }
+
+        private void StartLongPressMonitoring(QIPoint position)
+        {
+            _startPosition = position;
+            _isMonitoringForLongPress = true;
+            _longPressTimer.Start();
+        }
+
+        private void StopLongPressMonitoring()
+        {
+            _isMonitoringForLongPress = false;
+            _longPressTimer.Stop();
+        }
 
         private async void QIDrawingCanvasControl_Loaded(object sender, RoutedEventArgs e)
         {
@@ -107,7 +150,7 @@ namespace DeNote.Views
             }
 
             // 완성된 객체 렌더링
-            foreach (var obj in drawingContext.Objects)
+            foreach (var obj in drawingContext.OrderedObjects)
             {
                 renderer.Render(canvas, obj);
             }
@@ -280,38 +323,65 @@ namespace DeNote.Views
             if (!drawingContext.CanExecute) return;
             if (e.StylusDevice != null) return;
 
-            if (toolManager.ActiveToolType == QIDrawingToolType.Pen)
-            {
-                var penToolSettings = toolManager.GetCurrentSettings() as QIPenToolSettings;
-                if (penToolSettings != null)
-                {
-                    penToolSettings.PressureEnabled = false;
-                    toolManager.UpdateToolSettings(penToolSettings);
-                }
-            }
             var point = e.GetPosition(this);
+            var startPosition = new QIPoint
+            {
+                X = (float)point.X,
+                Y = (float)point.Y,
+                Pressure = defaultPressure // 마우스는 필압 정보 없음
+            };
 
+            var MenuRequestedEventArgs = new MenuRequestedEventArgs
+            {
+                MousePosition = startPosition,
+                MenuRequestType = MenuRequestType.Close
+            };
+            MenuRequested?.Invoke(this, MenuRequestedEventArgs);
+
+            if (!_isMonitoringForLongPress)
+            {
+                StartLongPressMonitoring(startPosition);
+            }
+
+            e.Handled = true;
+        }
+
+        private async Task StartDrawing(QIPoint point)
+        {
             await toolManager.HandleInput(new QIDrawingInputData
             {
                 Type = QIDrawingInputType.Down,
                 X = (float)point.X,
                 Y = (float)point.Y,
-                Pressure = defaultPressure  // 마우스는 필압 정보 없음
+                Pressure = point.Pressure  // 마우스는 필압 정보 없음
             });
 
             drawingContext.IsDrawing = true;
-            e.Handled = true;
-            CaptureMouse();
         }
 
         protected override async void OnMouseMove(MouseEventArgs e)
         {
+            if (e.StylusDevice != null) return;
+
+            var point = e.GetPosition(this);
+            var mousePosition = new QIPoint
+            {
+                X = (float)point.X,
+                Y = (float)point.Y,
+                Pressure = defaultPressure // 마우스는 필압 정보 없음
+            };
+
+            if (_isMonitoringForLongPress && _startPosition.DistanceTo(mousePosition) >= MovementThreshold)
+            {
+                // 마우스가 움직이면 긴 누름 모니터링 중지
+                StopLongPressMonitoring();
+                await StartDrawing(_startPosition);
+                CaptureMouse();
+            }
+
             if (drawingContext.IsDrawing)
             {
-                if (e.StylusDevice != null) return;
-
-                var point = e.GetPosition(this);
-
+                if (!drawingContext.CanExecute) return;
                 await toolManager.HandleInput(new QIDrawingInputData
                 {
                     Type = QIDrawingInputType.Move,
@@ -326,6 +396,13 @@ namespace DeNote.Views
 
         protected override async void OnMouseLeftButtonUp(MouseButtonEventArgs e)
         {
+            if (e.StylusDevice != null) return;
+            if (_isMonitoringForLongPress)
+            {
+                // 긴 누름 모니터링 중지
+                StopLongPressMonitoring();
+            }
+
             if (!drawingContext.IsDrawing) return;
             if (e.StylusDevice != null) return;
 
@@ -346,32 +423,25 @@ namespace DeNote.Views
 
         protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
         {
-            if (e.StylusDevice != null) return;
-            var point = e.GetPosition(this);
-            MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MousePosition = point, MenuRequestType = MenuRequestType.Open });
-            e.Handled = true;
-        }
-
-        protected override void OnStylusButtonUp(StylusButtonEventArgs e)
-        {
-            var point = e.GetPosition(this);
-            MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MousePosition = point, MenuRequestType = MenuRequestType.Open });
-            e.Handled = true;
-        }
-
-        protected override async void OnStylusDown(StylusDownEventArgs e)
-        {
-            if (!drawingContext.CanExecute) return;
-            if (toolManager.ActiveToolType == QIDrawingToolType.Pen)
+            // 스타일러스 입력에 의해 발생한 마우스 이벤트는 무시
+            if (e.StylusDevice != null)
             {
-                var penToolSettings = toolManager.GetCurrentSettings() as QIPenToolSettings;
-                if (penToolSettings != null)
-                {
-                    penToolSettings.PressureEnabled = true;
-                    toolManager.UpdateToolSettings(penToolSettings);
-                }
+                return;
             }
 
+            var point = e.GetPosition(this);
+            var mousePosition = new QIPoint
+            {
+                X = (float)point.X,
+                Y = (float)point.Y,
+                Pressure = 1.0f // 마우스는 필압 정보 없음
+            };
+            MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MousePosition = mousePosition, MenuRequestType = MenuRequestType.Open });
+            e.Handled = true;
+        }
+
+        protected override void OnStylusDown(StylusDownEventArgs e)
+        {
             var points = e.GetStylusPoints(this);
 
             if (points.Count == 0)
@@ -379,39 +449,59 @@ namespace DeNote.Views
 
             int i = 0;
             var point = points[i];
-            var input = new QIDrawingInputData
+            // 긴 누름 모니터링 시작
+            var startPosition = new QIPoint
             {
-                Type = QIDrawingInputType.Down,
                 X = (float)point.X,
                 Y = (float)point.Y,
                 Pressure = point.PressureFactor
             };
-            await toolManager.HandleInput(input);
 
-            for (i = 1; i < points.Count; i++)
+            var MenuRequestedEventArgs = new MenuRequestedEventArgs
             {
-                point = points[i];
-                input = new QIDrawingInputData
-                {
-                    Type = QIDrawingInputType.Move,
-                    X = (float)point.X,
-                    Y = (float)point.Y,
-                    Pressure = point.PressureFactor
-                };
-                await toolManager.HandleInput(input);
+                MousePosition = startPosition,
+                MenuRequestType = MenuRequestType.Close
+            };
+            MenuRequested?.Invoke(this, MenuRequestedEventArgs);
+
+            if (!_isMonitoringForLongPress)
+            {
+                StartLongPressMonitoring(startPosition);
             }
 
-            drawingContext.IsDrawing = true;
             e.Handled = true;
         }
 
         protected override async void OnStylusMove(StylusEventArgs e)
         {
+            var points = e.GetStylusPoints(this);
+            if (points.Count == 0)
+            {
+                if (_isMonitoringForLongPress)
+                {
+                    // 스타일러스가 움직이지 않으면 긴 누름 모니터링 중지
+                    StopLongPressMonitoring();
+                }
+            }
+            var firstPoint = points.FirstOrDefault();
+            var mousePosition = new QIPoint
+            {
+                X = (float)firstPoint.X,
+                Y = (float)firstPoint.Y,
+                Pressure = firstPoint.PressureFactor
+            };
+
+            if (_isMonitoringForLongPress && _startPosition.DistanceTo(mousePosition) >= StylusMovementThreshold)
+            {
+                // 스타일러스가 움직이면 긴 누름 모니터링 중지
+                if (!drawingContext.CanExecute) return;
+                StopLongPressMonitoring();
+                await StartDrawing(_startPosition);
+                CaptureStylus();
+            }
+
             if (drawingContext.IsDrawing)
             {
-                var points = e.GetStylusPoints(this);
-                if (points.Count == 0)
-                    return;
                 foreach (var point in points)
                 {
                     var input = new QIDrawingInputData
@@ -431,6 +521,12 @@ namespace DeNote.Views
 
         protected override async void OnStylusUp(StylusEventArgs e)
         {
+            if (_isMonitoringForLongPress)
+            {
+                // 긴 누름 모니터링 중지
+                StopLongPressMonitoring();
+            }
+
             if (!drawingContext.IsDrawing) return;
 
             var points = e.GetStylusPoints(this);
@@ -463,6 +559,7 @@ namespace DeNote.Views
 
             await toolManager.HandleInput(endInput);
 
+            ReleaseStylusCapture();
             drawingContext.IsDrawing = false;
             e.Handled = true;
         }
@@ -521,7 +618,7 @@ namespace DeNote.Views
 
         public class MenuRequestedEventArgs : EventArgs
         {
-            public Point MousePosition { get; set; }
+            public QIPoint MousePosition { get; set; }
             public required MenuRequestType MenuRequestType { get; set; }
         }
     }

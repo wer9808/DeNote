@@ -12,11 +12,11 @@
     <Grid>
         <Border
             x:Name="ToolbarContainer"
+            Margin="10"
             Background="#50443F"
             BorderBrush="#AAFFFFFF"
             BorderThickness="0.2"
             CornerRadius="16"
-                Margin="10"
             Opacity="0.9">
             <StackPanel
                 HorizontalAlignment="Left"
@@ -62,23 +62,23 @@
                         TextAlignment="Center" />
                 </ui:Button>
                 <ui:Button
-                        x:Name="ClearDrawingBtn"
-                        Margin="10"
-                        Padding="10"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="ClearDrawingBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
+                    x:Name="ClearDrawingBtn"
+                    Margin="10"
+                    Padding="10"
+                    HorizontalAlignment="Stretch"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Click="ClearDrawingBtn_Click"
+                    CornerRadius="30"
+                    Foreground="#C0FFFFFF"
+                    MouseOverBackground="Orange">
                     <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="✨"
-                            TextAlignment="Center" />
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="✨"
+                        TextAlignment="Center" />
                 </ui:Button>
                 <Separator Opacity="0.5" />
                 <ui:Button

@@ -14,15 +14,15 @@
     WindowStyle="None"
     mc:Ignorable="d">
     <Grid>
-        <local:QIDrawingCanvasControl x:Name="DrawingCanvasControl"/>
+        <local:QIDrawingCanvasControl x:Name="DrawingCanvasControl" />
         <tray:NotifyIcon>
             <tray:NotifyIcon.Menu>
                 <ContextMenu>
-                    <MenuItem Header="열기" Click="NotifyIcon_Show" />
-                    <MenuItem Header="종료" Click="NotifyIcon_Exit" />
+                    <MenuItem Click="NotifyIcon_Show" Header="열기" />
+                    <MenuItem Click="NotifyIcon_Exit" Header="종료" />
                 </ContextMenu>
             </tray:NotifyIcon.Menu>
         </tray:NotifyIcon>
     </Grid>
-    
+
 </Window>

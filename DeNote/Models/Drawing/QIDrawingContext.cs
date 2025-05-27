@@ -20,6 +20,7 @@ namespace DeNote.Models.Drawing
         public bool CanExecute => CommandManager.CanExecute;
 
         public ObservableCollection<QIDrawingObject> Objects { get; } = new ObservableCollection<QIDrawingObject>();
+        public List<QIDrawingObject> OrderedObjects { get => Objects.ToList().OrderBy(x => x.CreationTime).ToList(); }
         public RBush<QIDrawingObject> SpatialIndex;
 
         public bool IsDrawing { get; set; } = false;
@@ -48,6 +49,8 @@ namespace DeNote.Models.Drawing
         {
             this.canvasWidth = canvasWidth;
             this.canvasHeight = canvasHeight;
+
+            Objects = new ObservableCollection<QIDrawingObject>();
             SpatialIndex = new RBush<QIDrawingObject>();
 
             CommandManager = new QIDrawingCommandManager(this);
@@ -61,6 +64,7 @@ namespace DeNote.Models.Drawing
 
             this.ObjectAdded += OnObjectAdded;
             this.ObjectRemoved += OnObjectRemoved;
+            this.ObjectReset += OnObjectReset;
             Objects.CollectionChanged += (s, e) =>
             {
                 if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
@@ -79,6 +83,10 @@ namespace DeNote.Models.Drawing
                         ObjectRemoved.Invoke(this, new DrawingObjectEventArgs(obj));
                     }
                 }
+                else if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+                {
+                    ObjectReset.Invoke(this, null);
+                }
             };
         }
 
@@ -95,6 +103,12 @@ namespace DeNote.Models.Drawing
             // 객체가 제거될 때 QuadTree에서 제거
             var removedObject = e.Object;
             SpatialIndex.Delete(removedObject);
+            InvalidateVisual();
+        }
+
+        private void OnObjectReset(object? sender, DrawingObjectEventArgs? e)
+        {
+            SpatialIndex.Clear();
             InvalidateVisual();
         }
 
@@ -171,20 +185,17 @@ namespace DeNote.Models.Drawing
             }
         }
 
-        public async Task EndErasing()
+        public void EndErasing()
         {
             if (IsErasing)
             {
-                await EraseActualObjects().ContinueWith(x =>
-                {
-                    IsErasing = false;
-                    EraserBitmap.Dispose();
-                    InvalidateVisual();
-                });
+                IsErasing = false;
+                EraserBitmap.Dispose();
+                InvalidateVisual();
             }
         }
 
-        private async Task EraseActualObjects()
+        public async Task EraseActualObjects()
         {
             var actualEraserPath = eraserPaint.GetFillPath(eraserPath);
             var eraserBounds = actualEraserPath.ComputeTightBounds();
@@ -199,6 +210,7 @@ namespace DeNote.Models.Drawing
         // 이벤트
         public event EventHandler<DrawingObjectEventArgs> ObjectAdded;
         public event EventHandler<DrawingObjectEventArgs> ObjectRemoved;
+        public event EventHandler<DrawingObjectEventArgs?> ObjectReset;
 
         public event EventHandler ActiveObjectChanged;
         public event EventHandler VisualInvalidated;

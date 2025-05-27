@@ -39,7 +39,6 @@ namespace DeNote.Views
 
         public async void OnPreviewKeyDown(object? sender, KeyEventArgs e)
         {
-            Debug.WriteLine($"CanvasControl Preview Key Down: {e.Key}");
             // Handle key down events if necessary
             // Ctrl+Z 확인
             if (e.Key == Key.Z && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)

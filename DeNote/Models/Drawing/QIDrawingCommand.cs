@@ -175,15 +175,13 @@ namespace DeNote.Models.Drawing
             public QIDrawingObject TargetObject { get; }
             public SKPath OldPath { get; } // 이 Path는 Dispose() 되어야 함
             public SKPath NewPath { get; } // 이 Path는 Dispose() 되어야 함
-            public int OriginalIndex { get; }
             public bool IsCompletelyErased => NewPath.IsEmpty;
 
-            public EraseOperationResult(QIDrawingObject target, SKPath oldPath, SKPath newPath, int originalIndex)
+            public EraseOperationResult(QIDrawingObject target, SKPath oldPath, SKPath newPath)
             {
                 TargetObject = target;
                 OldPath = oldPath; // 생성된 Path를 받아서 보관
                 NewPath = newPath; // 생성된 Path를 받아서 보관
-                OriginalIndex = originalIndex;
             }
 
             // IDisposable 구현
@@ -236,24 +234,18 @@ namespace DeNote.Models.Drawing
 
                 // R-tree는 렌더링 순서를 보장하지 않으므로, _drawingObjects의 원래 순서를 기준으로 정렬하여 처리합니다.
                 // 역순으로 처리해야 컬렉션에서 제거 시 인덱스 문제가 발생하지 않습니다.
-                var sortedTargets = potentialTargets
-                    .Where(obj => _drawingObjects.Contains(obj)) // 아직 리스트에 있는 객체만 처리
-                    .Select(obj => new { Obj = obj, OriginalIndex = _drawingObjects.IndexOf(obj) })
-                    .OrderByDescending(x => x.OriginalIndex)
-                    .ToList();
+                var targetsToProcess = potentialTargets
+                                       .Where(obj => _drawingObjects.Contains(obj)) // 현재 컬렉션에 존재하는 객체만 처리
+                                       .ToList();
 
-                // UI 스레드에서 Path.Op 결과들을 저장할 임시 리스트
                 var resultsToApply = new List<EraseOperationResult>();
-
                 List<Task> opTasks = new List<Task>();
 
                 // `lock` 객체는 비동기 작업 결과를 저장할 리스트 접근 시 사용
                 object lockObject = new object();
 
-                foreach (var item in sortedTargets)
+                foreach (var drawingObject in targetsToProcess)
                 {
-                    var drawingObject = item.Obj;
-                    int originalIndex = item.OriginalIndex;
 
                     Task opTask = Task.Run(() =>
                     {
@@ -281,10 +273,9 @@ namespace DeNote.Models.Drawing
                                     // EraseOperationResult에 저장할 newPath는 tempNewPath의 복사본이어야 합니다.
                                     // 그래야 tempNewPath가 using 블록을 벗어나도 EraseOperationResult가 유효한 Path를 가집니다.
                                     SKPath newPathForResult = new SKPath(tempNewPath); // 복사본 생성
-
                                     lock (lockObject)
                                     {
-                                        resultsToApply.Add(new EraseOperationResult(drawingObject, oldPathForResult, newPathForResult, originalIndex));
+                                        resultsToApply.Add(new EraseOperationResult(drawingObject, oldPathForResult, newPathForResult));
                                     }
                                 }
                                 else
@@ -304,14 +295,14 @@ namespace DeNote.Models.Drawing
                 _dispatcher.Invoke(() =>
                 {
                     // 모든 연산 결과를 _lastExecutedResults에 저장 (Undo/Redo를 위한)
-                    _lastExecutedResults.AddRange(resultsToApply.OrderByDescending(r => r.OriginalIndex));
+                    _lastExecutedResults.AddRange(resultsToApply);
 
                     // _drawingObjects 컬렉션에 변경 사항 반영
                     foreach (var result in _lastExecutedResults) // 이미 역순으로 정렬됨
                     {
                         if (result.IsCompletelyErased)
                         {
-                            _drawingObjects.RemoveAt(result.OriginalIndex);
+                            _drawingObjects.Remove(result.TargetObject);
                         }
                         else
                         {
@@ -320,7 +311,7 @@ namespace DeNote.Models.Drawing
                         }
                     }
 
-                    _context.InvalidateVisual();
+                    _context.EndErasing();
                 });
             }
             finally
@@ -336,42 +327,52 @@ namespace DeNote.Models.Drawing
             await ExecuteAsync();
         }
 
-        public Task Undo()
+        public async Task Undo()
         {
-            if (!CanExecute(null))
-                return Task.CompletedTask;
-            _isExecuting = true;
-            _context.CommandManager.RaiseCanExecuteChanged(CanExecute(null));
+            if (!CanExecute(null)) return;
 
-            _dispatcher.Invoke(() =>
+            try
             {
-                // Path가 변경된 객체부터 복원 (이전 상태로 되돌림)
-                foreach (var result in _lastExecutedResults.Where(r => !r.IsCompletelyErased).Reverse())
-                {
-                    result.TargetObject.UpdatePath(result.OldPath); // OldPath는 이제 EraseOperationResult가 소유
-                    _context.UpdateIndex(result.TargetObject);
-                }
+                _isExecuting = true; // Undo 작업 중임을 알림
+                _context.CommandManager.RaiseCanExecuteChanged(CanExecute(null));
 
-                // 완전히 제거된 객체들을 복원 (원래 인덱스 오름차순으로 삽입)
-                foreach (var result in _lastExecutedResults.Where(r => r.IsCompletelyErased).OrderBy(r => r.OriginalIndex))
+                await Task.Run(() => // 백그라운드 스레드에서 Undo 작업 수행
                 {
-                    result.TargetObject.UpdatePath(result.OldPath); // OldPath는 이제 EraseOperationResult가 소유
-                    _drawingObjects.Insert(result.OriginalIndex, result.TargetObject);
-                }
+                    // Path가 변경된 객체부터 복원
+                    // _lastExecutedResults에 저장된 순서는 중요하지 않으므로 그냥 순회
+                    foreach (var result in _lastExecutedResults.Where(r => !r.IsCompletelyErased))
+                    {
+                        _dispatcher.Invoke(() =>
+                        {
+                            result.TargetObject.UpdatePath(result.OldPath); // 이전 Path로 복원
+                            _context.UpdateIndex(result.TargetObject);
+                        });
+                    }
 
+                    // 완전히 제거된 객체들을 다시 추가
+                    // 추가는 순서에 상관없이 그냥 Add
+                    foreach (var result in _lastExecutedResults.Where(r => r.IsCompletelyErased))
+                    {
+                        _dispatcher.Invoke(() =>
+                        {
+                            result.TargetObject.UpdatePath(result.OldPath); // 지워지기 전 Path로 복원
+                            _drawingObjects.Add(result.TargetObject); // 컬렉션에 다시 추가
+                        });
+                    }
+                });
+            }
+            finally
+            {
                 // Undo 완료 후, _lastExecutedResults에 저장된 SKPath 객체들을 Dispose
-                // (실제 Undo/Redo 스택에서는 이 명령 객체가 Redo 스택으로 이동하면 Dispose하지 않고,
-                // 완전히 스택에서 벗어날 때 Dispose하는 로직이 필요함)
                 foreach (var result in _lastExecutedResults)
                 {
                     result.Dispose();
                 }
-                _lastExecutedResults.Clear();
-            });
+                _lastExecutedResults.Clear(); // 리스트 클리어 (Redo를 위해선 Redo 스택으로 이동시켜야 함)
 
-            _isExecuting = false;
-            _context.CommandManager.RaiseCanExecuteChanged(CanExecute(null));
-            return Task.CompletedTask;
+                _isExecuting = false;
+                _context.CommandManager.RaiseCanExecuteChanged(CanExecute(null));
+            }
         }
     }
 

@@ -2,178 +2,165 @@
     x:Class="DeNote.Views.QIDrawingToolbar"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:DeNote.Views.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:DeNote.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    d:DesignWidth="800" d:DesignHeight="100"
+    d:DesignHeight="100"
+    d:DesignWidth="800"
     mc:Ignorable="d">
+
     <Grid>
         <Popup
             x:Name="ToolbarPopup"
-            Placement="MousePoint"
             AllowsTransparency="True"
+            HorizontalOffset="-100"
+            Placement="MousePoint"
+            PopupAnimation="Fade"
             StaysOpen="False"
-            IsOpen="False">
-            <Border
-                x:Name="ToolbarContainer"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Panel.ZIndex="10"
-                Background="#50443F"
-                BorderBrush="#AAFFFFFF"
-                BorderThickness="0.2"
-                CornerRadius="16"
-                Opacity="0.9">
-                <StackPanel Margin="0" Orientation="Horizontal">
-                    <StackPanel x:Name="DrawingToolPanel" Orientation="Horizontal">
-                        <ui:Button
-                            x:Name="PenBtn"
-                            Margin="8"
-                            Padding="5"
-                            HorizontalAlignment="Stretch"
-                            Background="Transparent"
-                            BorderBrush="Transparent"
-                            Click="PenBtn_Click"
-                            CornerRadius="30"
-                            Foreground="#C0FFFFFF"
-                            MouseOverBackground="Orange">
-                            <!--  Pen  -->
-                            <TextBlock
-                                Width="20"
-                                Height="20"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Text="✏️"
-                                TextAlignment="Center" />
-                        </ui:Button>
-                        <ui:Button
-                            x:Name="HighlighterBtn"
-                            Margin="4,8"
-                            Padding="5"
-                            HorizontalAlignment="Stretch"
-                            Background="Transparent"
-                            BorderBrush="Transparent"
-                            Click="HighlighterBtn_Click"
-                            CornerRadius="30"
-                            Foreground="#C0FFFFFF"
-                            MouseOverBackground="Orange">
-                            <!--  Pen  -->
-                            <TextBlock
-                                Width="20"
-                                Height="20"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Text="🖍️"
-                                TextAlignment="Center" />
-                        </ui:Button>
-                        <ui:Button
-                            x:Name="ShapeBtn"
-                            Margin="4,8"
-                            Padding="5"
-                            HorizontalAlignment="Stretch"
-                            Background="Transparent"
-                            BorderBrush="Transparent"
-                            Click="ShapeBtn_Click"
-                            CornerRadius="30"
-                            Foreground="#C0FFFFFF"
-                            MouseOverBackground="Orange">
-                            <TextBlock
-                                Width="20"
-                                Height="20"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Text="🔶"
-                                TextAlignment="Center" />
-                        </ui:Button>
-                        <ui:Button
-                            x:Name="EraserBtn"
-                            Margin="4,8"
-                            Padding="5"
-                            HorizontalAlignment="Stretch"
-                            Background="Transparent"
-                            BorderBrush="Transparent"
-                            Click="EraserBtn_Click"
-                            CornerRadius="30"
-                            Foreground="#C0FFFFFF"
-                            MouseOverBackground="Orange">
-                            <TextBlock
-                                Width="20"
-                                Height="20"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Text="❇️"
-                                TextAlignment="Center" />
-                        </ui:Button>
-                    </StackPanel>
-                    <Separator Opacity="0.5" />
-                    <ui:Button
-                        x:Name="ThicknessBtn"
-                            Margin="4,8"
-                            Padding="5"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="ThicknessBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="✒️"
-                            TextAlignment="Center" />
-                    </ui:Button>
-                    <ui:Button
-                        x:Name="ColorPickerBtn"
-                            Margin="4,8"
-                            Padding="5"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="ColorPickerBtn_Click"
-                        CornerRadius="30"
-                        MouseOverBackground="Orange">
-                        <Ellipse
-                            x:Name="ColorPreviewCircle"
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Stroke="#C0FFFFFF" />
-                    </ui:Button>
-                    <Separator Opacity="0.5" />
-                    <ui:Button
-                        x:Name="CloseBtn"
-                            Margin="8"
-                            Padding="5"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="CloseBtn_Click"
-                        CornerRadius="30"
-                        Foreground="#C0FFFFFF"
-                        MouseOverBackground="Orange">
-                        <TextBlock
-                            Width="20"
-                            Height="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="❌"
-                            TextAlignment="Center" />
-                    </ui:Button>
-                </StackPanel>
-            </Border>
+            VerticalOffset="-100">
+            <Grid Width="200" Height="200">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <ui:Button
+                    x:Name="DrawingToolPickerBtn"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Padding="16"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="#50443F"
+                    BorderBrush="#AAFFFFFF"
+                    BorderThickness="0.2"
+                    Click="DrawingToolPickerBtn_Click"
+                    CornerRadius="30"
+                    Foreground="#C0FFFFFF"
+                    MouseOverBackground="Orange"
+                    Opacity="0.9">
+                    <!--  Pen  -->
+                    <TextBlock
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        TextAlignment="Center" />
+                </ui:Button>
+                <ui:Button
+                    x:Name="ThicknessBtn"
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Padding="16"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="#50443F"
+                    BorderBrush="#AAFFFFFF"
+                    BorderThickness="0.2"
+                    Click="ThicknessBtn_Click"
+                    CornerRadius="30"
+                    Foreground="#C0FFFFFF"
+                    MouseOverBackground="Orange"
+                    Opacity="0.9">
+                    <TextBlock
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        Text="T"
+                        TextAlignment="Center" />
+                </ui:Button>
+                <ui:Button
+                    x:Name="ShapeBtn"
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Padding="16"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="#50443F"
+                    BorderBrush="#AAFFFFFF"
+                    BorderThickness="0.2"
+                    Click="ShapeBtn_Click"
+                    CornerRadius="30"
+                    Foreground="#C0FFFFFF"
+                    MouseOverBackground="Orange"
+                    Opacity="0.9">
+                    <TextBlock
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        Text="S"
+                        TextAlignment="Center" />
+                </ui:Button>
+
+                <ui:Button
+                    x:Name="ColorPickerBtn"
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Padding="16"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="#50443F"
+                    BorderBrush="#AAFFFFFF"
+                    BorderThickness="0.2"
+                    Click="ColorPickerBtn_Click"
+                    CornerRadius="30"
+                    MouseOverBackground="Orange"
+                    Opacity="0.9">
+                    <Ellipse
+                        x:Name="ColorPreviewCircle"
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Stroke="#C0FFFFFF" />
+                </ui:Button>
+                <ui:Button
+                    x:Name="CloseBtn"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="8"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="#50443F"
+                    BorderBrush="#AAFFFFFF"
+                    BorderThickness="0.2"
+                    Click="CloseBtn_Click"
+                    CornerRadius="50"
+                    Foreground="#C0FFFFFF"
+                    MouseOverBackground="Orange"
+                    Opacity="0.9">
+                    <TextBlock
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        Text="❌"
+                        TextAlignment="Center" />
+                </ui:Button>
+            </Grid>
         </Popup>
 
 
         <Popup
             x:Name="ShapePickerPopup"
-            Placement="Bottom"
+            HorizontalOffset="-200"
+            Placement="Center"
             PlacementTarget="{Binding ElementName=ShapeBtn}"
-            StaysOpen="False">
+            StaysOpen="False"
+            VerticalOffset="0">
             <Border
                 Padding="10"
                 Background="White"
@@ -229,9 +216,13 @@
 
         <Popup
             x:Name="ThicknessPopup"
-            Placement="Bottom"
+            AllowsTransparency="True"
+            HorizontalOffset="60"
+            Placement="Center"
             PlacementTarget="{Binding ElementName=ThicknessBtn}"
-            StaysOpen="False">
+            PopupAnimation="Fade"
+            StaysOpen="False"
+            VerticalOffset="0">
             <Border
                 Padding="10"
                 Background="White"
@@ -265,109 +256,20 @@
             </Border>
         </Popup>
 
-        <Popup
+        <controls:ColorPickerPopup
             x:Name="ColorPickerPopup"
-            Placement="Bottom"
+            HorizontalOffset="0"
+            Placement="Center"
             PlacementTarget="{Binding ElementName=ColorPickerBtn}"
-            StaysOpen="False">
-            <Border
-                Padding="10"
-                Background="White"
-                BorderBrush="Black"
-                BorderThickness="1">
-                <StackPanel>
-                    <TextBlock
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Text="색상 선택" />
-                    <UniformGrid Columns="4">
-                        <Button
-                            x:Name="RedBtn"
-                            Margin="5"
-                            Background="Red"
-                            Click="ColorBtn_Click"
-                            Tag="Red" />
-                        <Button
-                            x:Name="GreenBtn"
-                            Margin="5"
-                            Background="Green"
-                            Click="ColorBtn_Click"
-                            Tag="Green" />
-                        <Button
-                            x:Name="BlueBtn"
-                            Margin="5"
-                            Background="Blue"
-                            Click="ColorBtn_Click"
-                            Tag="Blue" />
-                        <Button
-                            x:Name="YellowBtn"
-                            Margin="5"
-                            Background="Yellow"
-                            Click="ColorBtn_Click"
-                            Tag="Yellow" />
-                        <Button
-                            x:Name="CyanBtn"
-                            Margin="5"
-                            Background="Cyan"
-                            Click="ColorBtn_Click"
-                            Tag="Cyan" />
-                        <Button
-                            x:Name="MagentaBtn"
-                            Margin="5"
-                            Background="Magenta"
-                            Click="ColorBtn_Click"
-                            Tag="Magenta" />
-                        <Button
-                            x:Name="BlackBtn"
-                            Margin="5"
-                            Background="Black"
-                            Click="ColorBtn_Click"
-                            Tag="Black" />
-                        <Button
-                            x:Name="WhiteBtn"
-                            Margin="5"
-                            Background="White"
-                            Click="ColorBtn_Click"
-                            Tag="White" />
-                        <Button
-                            x:Name="GrayBtn"
-                            Margin="5"
-                            Background="Gray"
-                            Click="ColorBtn_Click"
-                            Tag="Gray" />
-                        <Button
-                            x:Name="OrangeBtn"
-                            Margin="5"
-                            Background="Orange"
-                            Click="ColorBtn_Click"
-                            Tag="Orange" />
-                        <Button
-                            x:Name="PinkBtn"
-                            Margin="5"
-                            Background="Pink"
-                            Click="ColorBtn_Click"
-                            Tag="Pink" />
-                        <Button
-                            x:Name="PurpleBtn"
-                            Margin="5"
-                            Background="Purple"
-                            Click="ColorBtn_Click"
-                            Tag="Purple" />
-                        <Button
-                            x:Name="BrownBtn"
-                            Margin="5"
-                            Background="Brown"
-                            Click="ColorBtn_Click"
-                            Tag="Brown" />
-                        <Button
-                            x:Name="LimeBtn"
-                            Margin="5"
-                            Background="Lime"
-                            Click="ColorBtn_Click"
-                            Tag="Lime" />
-                    </UniformGrid>
-                </StackPanel>
-            </Border>
-        </Popup>
+            SelectedColorChanged="ColorPickerPopup_SelectedColorChanged"
+            VerticalOffset="120" />
+
+        <controls:DrawingToolPickerPopup
+            x:Name="DrawingToolPickerPopup"
+            HorizontalOffset="0"
+            Placement="Center"
+            PlacementTarget="{Binding ElementName=DrawingToolPickerBtn}"
+            SelectedToolChanged="DrawingToolPickerPopup_SelectedToolChanged"
+            VerticalOffset="-60" />
     </Grid>
 </UserControl>
