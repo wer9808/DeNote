@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 using System.Windows;
+using System.Windows.Threading;
 using ScreenRecorderLib;
-using System.Diagnostics;
 
 namespace DeNote.Services
 {
@@ -17,12 +18,73 @@ namespace DeNote.Services
         private bool _isRecording = false;
         public bool IsRecording => _isRecording;
 
+        public event EventHandler<RecordingFailedEventArgs>? RecordingFailed;
+
+        // Helper method to check write permissions
+        private bool HasWritePermissionToDirectory(string directoryPath)
+        {
+            try
+            {
+                // 1. Attempt to create the directory if it doesn't exist.
+                if (!Directory.Exists(directoryPath))
+                {
+                    Directory.CreateDirectory(directoryPath); // This will create all directories in the path.
+                }
+
+                // 2. Attempt to create and delete a temporary file in the directory.
+                // Using Guid to ensure a unique temporary file name.
+                // FileOptions.DeleteOnClose ensures the file is cleaned up automatically.
+                string tempFilePath = Path.Combine(directoryPath, Guid.NewGuid().ToString() + ".tmp");
+                using (FileStream fs = File.Create(tempFilePath, 1, FileOptions.DeleteOnClose))
+                {
+                    // If we reach here, we were able to create the file.
+                    // The file will be deleted when fs is disposed (at the end of the using block).
+                }
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Specific catch for permission issues.
+                Debug.WriteLine($"Permission denied for directory: {directoryPath}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Other exceptions (e.g., path too long, invalid characters, disk full, etc.)
+                // For simplicity in this check, also treat these as "cannot write here".
+                Debug.WriteLine($"Error checking write permission for '{directoryPath}': {ex.Message}");
+                return false;
+            }
+        }
+
         public void StartRecording()
         {
             if (_isRecording)
-                return; 
+                return;
+
+            string? saveDir = AppConfig.VideoSavePath; // Make sure AppConfig.VideoSavePath provides a valid path string
+            if (saveDir == null)
+            {
+                _isRecording = false; // Ensure state is correct
+                throw new Exception("녹화 저장 경로가 설정되지 않았습니다. 저장 경로를 확인해주세요.");
+            }
+
+                // --- Permission Check Start ---
+            if (!HasWritePermissionToDirectory(saveDir))
+            {
+                Debug.WriteLine($"녹화 권한 오류: '{saveDir}' 경로에 쓸 수 없습니다.");
+                _isRecording = false; // Ensure state is correct
+                throw new UnauthorizedAccessException($"녹화 권한 오류: '{saveDir}' 경로에 쓸 수 없습니다.");
+            }
+
             try 
             {
+
+                // 저장할 파일 경로 지정
+                string savePath = System.IO.Path.Combine(
+                    saveDir,
+                    $"ScreenRecording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
+
                 // Primary Display만 녹화하는 설정
                 var options = new RecorderOptions
                 {
@@ -41,7 +103,6 @@ namespace DeNote.Services
                     {
                         Framerate = 30, // 초당 프레임 수
                         Quality = 100, // 비디오 품질 (0-100)
-                        Bitrate = 5000000, // 비트레이트 (5Mbps)
                         Encoder = new H264VideoEncoder() // H.264 인코더 사용
                     },
 
@@ -64,59 +125,30 @@ namespace DeNote.Services
                 _recorder.OnRecordingFailed += OnRecordingFailed;
                 _recorder.OnStatusChanged += OnRecordingStatusChanged;
 
-                string saveDir = AppConfig.VideoSavePath;
-
-                if (!System.IO.Directory.Exists(saveDir))
-                {
-                    System.IO.Directory.CreateDirectory(saveDir);
-                }
-
-                // 저장할 파일 경로 지정
-                string savePath = System.IO.Path.Combine(
-                    saveDir,
-                    $"ScreenRecording_{DateTime.Now:yyyyMMdd_HHmmss}.mp4");
-
                 // 녹화 시작
                 _recorder.Record(savePath);
 
                 _isRecording = true;
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException ex)
             {
-                MessageBox.Show($"녹화 시작 중 오류 발생: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        public void PauseRecording()
-        {
-            try
-            {
-                if (_isRecording)
-                {
-                    // 녹화 일시 정지
-                    _recorder?.Pause();
-                }
+                Debug.WriteLine($"녹화 권한 오류: {ex.Message}");
+                _isRecording = false;
+                throw;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"녹화 일시 정지 중 오류 발생: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debug.WriteLine($"녹화 시작 중 오류: {ex.Message}");
+                _isRecording = false;
+                throw;
             }
         }
 
         public void StopRecording()
         {
-            try
-            {
-                // 녹화 중지
-                _recorder?.Stop();
-
-                // 레코더 객체 해제는 OnRecordingComplete 이벤트에서 처리
-                _isRecording = false;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"녹화 중지 중 오류 발생: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            // 녹화 중지
+            _recorder?.Stop();
+            _isRecording = false;
         }
 
         private void OnRecordingComplete(object? sender, RecordingCompleteEventArgs e)
@@ -139,10 +171,8 @@ namespace DeNote.Services
         {
             try
             {
-                Dispatcher.CurrentDispatcher.Invoke(() =>
-                {
-                    MessageBox.Show($"녹화 실패: {e.Error}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
-                });
+                // 녹화 실패 이벤트 발생 시 사용자에게 알림
+                this.RecordingFailed?.Invoke(this, e);
 
                 // 레코더 객체 정리
                 DisposeRecorder();
@@ -182,7 +212,7 @@ namespace DeNote.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"레코더 정리 중 오류: {ex.Message}");
+                Debug.WriteLine($"레코더 정리 중 오류: {ex.Message}");
             }
         }
 

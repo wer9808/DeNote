@@ -1,5 +1,5 @@
 ﻿<UserControl
-    x:Class="DeNote.Views.Controls.DrawingToolPickerPopup"
+    x:Class="DeNote.Views.Controls.QIDrawingToolPicker"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -10,21 +10,12 @@
     d:DesignHeight="150"
     d:DesignWidth="150"
     mc:Ignorable="d">
-    <Popup
-        x:Name="DrawingToolPopup"
-        AllowsTransparency="True"
-        HorizontalOffset="{Binding HorizontalOffset, ElementName=Root}"
-        IsOpen="{Binding IsOpen, ElementName=Root}"
-        Placement="{Binding Placement, ElementName=Root}"
-        PlacementTarget="{Binding PlacementTarget, ElementName=Root}"
-        PopupAnimation="Fade"
-        StaysOpen="False"
-        VerticalOffset="{Binding VerticalOffset, ElementName=Root}">
+    <Grid>
         <StackPanel Background="Transparent" Orientation="Horizontal">
             <ui:Button
                 x:Name="PenBtn"
-                Margin="8"
-                Padding="5"
+                Margin="4,8"
+                Padding="6"
                 HorizontalAlignment="Stretch"
                 Background="#50443F"
                 BorderBrush="#AAFFFFFF"
@@ -36,18 +27,24 @@
                 Opacity="0.9"
                 Tag="Pen">
                 <!--  Pen  -->
-                <TextBlock
+                <Image
                     Width="20"
                     Height="20"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Text="✏️"
-                    TextAlignment="Center" />
+                    Source="/Resources/icon_tools_pencil_white.png">
+                    <Image.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Image.Effect>
+                </Image>
+                <Button.Effect>
+                    <DropShadowEffect ShadowDepth="2" />
+                </Button.Effect>
             </ui:Button>
             <ui:Button
                 x:Name="HighlighterBtn"
                 Margin="4,8"
-                Padding="5"
+                Padding="6"
                 HorizontalAlignment="Stretch"
                 Background="#50443F"
                 BorderBrush="#AAFFFFFF"
@@ -59,18 +56,24 @@
                 Opacity="0.9"
                 Tag="Highlighter">
                 <!--  Pen  -->
-                <TextBlock
+                <Image
                     Width="20"
                     Height="20"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Text="🖍️"
-                    TextAlignment="Center" />
+                    Source="/Resources/icon_tools_highlighter_white.png">
+                    <Image.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Image.Effect>
+                </Image>
+                <Button.Effect>
+                    <DropShadowEffect ShadowDepth="2" />
+                </Button.Effect>
             </ui:Button>
             <ui:Button
                 x:Name="ShapeBtn"
                 Margin="4,8"
-                Padding="5"
+                Padding="6"
                 HorizontalAlignment="Stretch"
                 Background="#50443F"
                 BorderBrush="#AAFFFFFF"
@@ -81,18 +84,24 @@
                 MouseOverBackground="Orange"
                 Opacity="0.9"
                 Tag="Shape">
-                <TextBlock
+                <Image
                     Width="20"
                     Height="20"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Text="🔲"
-                    TextAlignment="Center" />
+                    Source="/Resources/icon_tools_shape_white.png">
+                    <Image.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Image.Effect>
+                </Image>
+                <Button.Effect>
+                    <DropShadowEffect ShadowDepth="2" />
+                </Button.Effect>
             </ui:Button>
             <ui:Button
                 x:Name="EraserBtn"
                 Margin="4,8"
-                Padding="5"
+                Padding="6"
                 HorizontalAlignment="Stretch"
                 Background="#50443F"
                 BorderBrush="#AAFFFFFF"
@@ -103,14 +112,20 @@
                 MouseOverBackground="Orange"
                 Opacity="0.9"
                 Tag="Eraser">
-                <TextBlock
+                <Image
                     Width="20"
                     Height="20"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Text="🧽"
-                    TextAlignment="Center" />
+                    Source="/Resources/icon_tools_eraser_white.png">
+                    <Image.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Image.Effect>
+                </Image>
+                <Button.Effect>
+                    <DropShadowEffect ShadowDepth="2" />
+                </Button.Effect>
             </ui:Button>
         </StackPanel>
-    </Popup>
+    </Grid>
 </UserControl>

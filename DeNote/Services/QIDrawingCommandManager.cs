@@ -31,6 +31,7 @@ namespace DeNote.Services
         // 명령 실행
         public async Task Execute(QIDrawingCommand command)
         {
+            if (!CanExecute) return;
             await Task.Run(() => command.Execute(null));
 
             // 스택 크기 제한 적용
@@ -49,6 +50,7 @@ namespace DeNote.Services
 
         public async Task Undo()
         {
+            if (!CanExecute) return;
             if (!CanUndo) return;
 
             var command = undoList.Last!.Value;
@@ -64,6 +66,7 @@ namespace DeNote.Services
         public bool CanRedo => redoList.Count > 0;
         public async Task Redo()
         {
+            if (!CanExecute) return;
             if (!CanRedo) return;
 
             var command = redoList.Last!.Value;

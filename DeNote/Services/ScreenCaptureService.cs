@@ -10,6 +10,7 @@ using SkiaSharp;
 using System.Windows.Interop;
 using System.Windows;
 using System.IO;
+using System.Diagnostics;
 
 namespace DeNote.Services
 {
@@ -134,6 +135,7 @@ namespace DeNote.Services
 
                     if (!System.IO.Directory.Exists(saveDir))
                     {
+                        Console.WriteLine(saveDir);
                         System.IO.Directory.CreateDirectory(saveDir);
                     }
 
@@ -151,12 +153,15 @@ namespace DeNote.Services
                 }
                 else
                 {
-                    Console.WriteLine("Failed to capture screen.");
+                    var errorMessage = "Failed to capture screen image.";
+                    Debug.WriteLine(errorMessage);
+                    throw new Exception(errorMessage);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error saving screenshot: {ex.Message}");
+                Debug.WriteLine($"Error saving screenshot: {ex.Message}");
+                throw;
             }
         }
     }

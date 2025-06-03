@@ -35,6 +35,7 @@
                     x:Name="DrawingToolPickerBtn"
                     Grid.Row="0"
                     Grid.Column="1"
+                    Margin="2"
                     Padding="16"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -47,18 +48,26 @@
                     MouseOverBackground="Orange"
                     Opacity="0.9">
                     <!--  Pen  -->
-                    <TextBlock
+                    <Image
+                        x:Name="DrawingToolPickerBtnIcon"
                         Width="20"
                         Height="20"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontSize="16"
-                        TextAlignment="Center" />
+                        RenderOptions.BitmapScalingMode="HighQuality">
+                        <Image.Effect>
+                            <DropShadowEffect ShadowDepth="2" />
+                        </Image.Effect>
+                    </Image>
+                    <Button.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Button.Effect>
                 </ui:Button>
                 <ui:Button
                     x:Name="ThicknessBtn"
                     Grid.Row="1"
                     Grid.Column="2"
+                    Margin="2"
                     Padding="16"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -70,44 +79,58 @@
                     Foreground="#C0FFFFFF"
                     MouseOverBackground="Orange"
                     Opacity="0.9">
-                    <TextBlock
+                    <Image
                         Width="20"
                         Height="20"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontSize="16"
-                        Text="T"
-                        TextAlignment="Center" />
+                        RenderOptions.BitmapScalingMode="HighQuality"
+                        Source="/Resources/icon_tools_thickness_white.png">
+                        <Image.Effect>
+                            <DropShadowEffect ShadowDepth="2" />
+                        </Image.Effect>
+                    </Image>
+                    <Button.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Button.Effect>
                 </ui:Button>
                 <ui:Button
-                    x:Name="ShapeBtn"
+                    x:Name="ShapePickerBtn"
                     Grid.Row="1"
                     Grid.Column="0"
+                    Margin="2"
                     Padding="16"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Background="#50443F"
                     BorderBrush="#AAFFFFFF"
                     BorderThickness="0.2"
-                    Click="ShapeBtn_Click"
+                    Click="ShapePickerBtn_Click"
                     CornerRadius="30"
                     Foreground="#C0FFFFFF"
                     MouseOverBackground="Orange"
                     Opacity="0.9">
-                    <TextBlock
+                    <Image
+                        x:Name="ShapePickerBtnIcon"
                         Width="20"
                         Height="20"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontSize="16"
-                        Text="S"
-                        TextAlignment="Center" />
+                        RenderOptions.BitmapScalingMode="HighQuality">
+                        <Image.Effect>
+                            <DropShadowEffect ShadowDepth="2" />
+                        </Image.Effect>
+                    </Image>
+                    <Button.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Button.Effect>
                 </ui:Button>
 
                 <ui:Button
                     x:Name="ColorPickerBtn"
                     Grid.Row="2"
                     Grid.Column="1"
+                    Margin="2"
                     Padding="16"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -124,7 +147,14 @@
                         Height="20"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Stroke="#C0FFFFFF" />
+                        Stroke="#C0FFFFFF">
+                        <Ellipse.Effect>
+                            <DropShadowEffect ShadowDepth="2" />
+                        </Ellipse.Effect>
+                    </Ellipse>
+                    <Button.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Button.Effect>
                 </ui:Button>
                 <ui:Button
                     x:Name="CloseBtn"
@@ -146,9 +176,16 @@
                         Height="20"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontSize="16"
+                        FontSize="14"
                         Text="❌"
-                        TextAlignment="Center" />
+                        TextAlignment="Center">
+                        <TextBlock.Effect>
+                            <DropShadowEffect ShadowDepth="2" />
+                        </TextBlock.Effect>
+                    </TextBlock>
+                    <Button.Effect>
+                        <DropShadowEffect ShadowDepth="2" />
+                    </Button.Effect>
                 </ui:Button>
             </Grid>
         </Popup>
@@ -156,120 +193,176 @@
 
         <Popup
             x:Name="ShapePickerPopup"
-            HorizontalOffset="-200"
+            AllowsTransparency="True"
+            HorizontalOffset="-130"
             Placement="Center"
-            PlacementTarget="{Binding ElementName=ShapeBtn}"
+            PlacementTarget="{Binding ElementName=ShapePickerBtn}"
+            PopupAnimation="Fade"
             StaysOpen="False"
             VerticalOffset="0">
             <Border
+                Margin="5"
                 Padding="10"
-                Background="White"
-                BorderBrush="Black"
-                BorderThickness="1">
-                <StackPanel>
-                    <TextBlock
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Text="옵션" />
-                    <StackPanel Orientation="Horizontal">
-                        <CheckBox
-                            x:Name="FillOptionCheckBox"
-                            Margin="5"
-                            Checked="FillOptionCheckBox_Checked"
-                            Content="채우기"
-                            Unchecked="FillOptionCheckBox_Checked" />
-                    </StackPanel>
-                    <TextBlock
-                        Margin="0,0,0,10"
-                        FontWeight="Bold"
-                        Text="도형 선택" />
+                Background="#50443F"
+                BorderBrush="#AAFFFFFF"
+                BorderThickness="0.2"
+                CornerRadius="10"
+                Opacity="0.9">
+
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="2" />
+                </Border.Effect>
+                <StackPanel Margin="4">
+
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Grid.Column="0"
+                            FontSize="16"
+                            Foreground="GhostWhite"
+                            Text="도형" />
+                        <TextBlock
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="White"
+                            Text="채우기" />
+                        <Viewbox
+                            Grid.Column="2"
+                            Width="20"
+                            Height="20"
+                            Margin="0"
+                            VerticalAlignment="Center">
+                            <CheckBox
+                                x:Name="FillOptionCheckBox"
+                                Margin="0,3,-16,0"
+                                Padding="0"
+                                VerticalAlignment="Center"
+                                Background="White"
+                                Checked="FillOptionCheckBox_Checked"
+                                Unchecked="FillOptionCheckBox_Checked" />
+                        </Viewbox>
+                    </Grid>
                     <!--  도형 선택 버튼들  -->
-                    <StackPanel x:Name="ShapesPanel" Orientation="Horizontal">
-                        <Button
+                    <UniformGrid
+                        x:Name="ShapesPanel"
+                        Margin="0,8"
+                        VerticalAlignment="Center"
+                        Columns="3">
+                        <ui:Button
                             x:Name="RectangleBtn"
-                            Margin="5"
-                            Click="ShapeTypeBtn_Click"
-                            Content="사각형"
-                            Tag="Rectangle" />
-                        <Button
+                            Margin="4"
+                            HorizontalAlignment="Stretch"
+                            BorderThickness="0"
+                            Click="ShapeBtn_Click"
+                            Tag="Rectangle">
+                            <Image
+                                Width="20"
+                                Height="20"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                RenderOptions.BitmapScalingMode="HighQuality"
+                                Source="/Resources/icon_tools_rect_white.png" />
+                            <Button.Effect>
+                                <DropShadowEffect ShadowDepth="2" />
+                            </Button.Effect>
+                        </ui:Button>
+                        <ui:Button
                             x:Name="EllipseBtn"
-                            Margin="5"
-                            Click="ShapeTypeBtn_Click"
-                            Content="원"
-                            Tag="Ellipse" />
-                        <Button
+                            Margin="4"
+                            HorizontalAlignment="Stretch"
+                            BorderThickness="0"
+                            Click="ShapeBtn_Click"
+                            Tag="Ellipse">
+                            <Image
+                                Width="20"
+                                Height="20"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                RenderOptions.BitmapScalingMode="HighQuality"
+                                Source="/Resources/icon_tools_circle_white.png" />
+                            <Button.Effect>
+                                <DropShadowEffect ShadowDepth="2" />
+                            </Button.Effect>
+                        </ui:Button>
+                        <ui:Button
                             x:Name="TriangleBtn"
-                            Margin="5"
-                            Click="ShapeTypeBtn_Click"
-                            Content="삼각형"
-                            Tag="Triangle" />
-                        <Button
+                            Margin="4"
+                            HorizontalAlignment="Stretch"
+                            BorderThickness="0"
+                            Click="ShapeBtn_Click"
+                            Tag="Triangle">
+                            <Image
+                                Width="20"
+                                Height="20"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                RenderOptions.BitmapScalingMode="HighQuality"
+                                Source="/Resources/icon_tools_triangle_white.png" />
+                            <Button.Effect>
+                                <DropShadowEffect ShadowDepth="2" />
+                            </Button.Effect>
+                        </ui:Button>
+                        <ui:Button
                             x:Name="LineBtn"
-                            Margin="5"
-                            Click="ShapeTypeBtn_Click"
-                            Content="선"
-                            Tag="Line" />
-                    </StackPanel>
+                            Margin="4,2"
+                            HorizontalAlignment="Stretch"
+                            BorderThickness="0"
+                            Click="ShapeBtn_Click"
+                            Tag="Line">
+                            <Image
+                                Width="20"
+                                Height="20"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                RenderOptions.BitmapScalingMode="HighQuality"
+                                Source="/Resources/icon_tools_line_white.png" />
+                            <Button.Effect>
+                                <DropShadowEffect ShadowDepth="2" />
+                            </Button.Effect>
+                        </ui:Button>
+                    </UniformGrid>
                 </StackPanel>
             </Border>
         </Popup>
 
         <Popup
-            x:Name="ThicknessPopup"
+            x:Name="ThicknessPickerPopup"
             AllowsTransparency="True"
-            HorizontalOffset="60"
+            HorizontalOffset="100"
             Placement="Center"
             PlacementTarget="{Binding ElementName=ThicknessBtn}"
             PopupAnimation="Fade"
             StaysOpen="False"
             VerticalOffset="0">
-            <Border
-                Padding="10"
-                Background="White"
-                BorderBrush="Black"
-                BorderThickness="1">
-                <StackPanel>
-                    <TextBlock
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Text="두께"
-                        TextAlignment="Center" />
-                    <StackPanel Orientation="Vertical">
-                        <Slider
-                            x:Name="ThicknessSlider"
-                            Margin="5"
-                            HorizontalAlignment="Center"
-                            IsSnapToTickEnabled="True"
-                            Maximum="20"
-                            Minimum="1"
-                            Orientation="Vertical"
-                            TickFrequency="1"
-                            ValueChanged="ThicknessSlider_ValueChanged" />
-                        <TextBlock
-                            x:Name="ThicknessValueText"
-                            Width="40"
-                            HorizontalAlignment="Center"
-                            Text="{Binding ElementName=ThicknessSlider, Path=Value, StringFormat={}{0}}"
-                            TextAlignment="Center" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
+            <controls:QIThicknessPicker x:Name="ThicknessPicker" ThicknessChanged="ThicknessPicker_ThicknessChanged" />
         </Popup>
 
-        <controls:ColorPickerPopup
+        <Popup
             x:Name="ColorPickerPopup"
+            AllowsTransparency="True"
             HorizontalOffset="0"
             Placement="Center"
             PlacementTarget="{Binding ElementName=ColorPickerBtn}"
-            SelectedColorChanged="ColorPickerPopup_SelectedColorChanged"
-            VerticalOffset="120" />
+            StaysOpen="False"
+            VerticalOffset="130">
+            <controls:QIColorPicker x:Name="ColorPicker" SelectedColorChanged="ColorPicker_SelectedColorChanged" />
+        </Popup>
 
-        <controls:DrawingToolPickerPopup
+        <Popup
             x:Name="DrawingToolPickerPopup"
+            AllowsTransparency="True"
             HorizontalOffset="0"
             Placement="Center"
             PlacementTarget="{Binding ElementName=DrawingToolPickerBtn}"
-            SelectedToolChanged="DrawingToolPickerPopup_SelectedToolChanged"
-            VerticalOffset="-60" />
+            StaysOpen="False"
+            VerticalOffset="-60">
+
+            <controls:QIDrawingToolPicker x:Name="DrawingToolPicker" SelectedToolChanged="DrawingToolPicker_SelectedToolChanged" />
+        </Popup>
     </Grid>
 </UserControl>

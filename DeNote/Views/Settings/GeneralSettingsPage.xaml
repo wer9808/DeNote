@@ -10,30 +10,50 @@
     mc:Ignorable="d">
     <Grid>
         <StackPanel Orientation="Vertical">
-            <TextBlock Margin="10" Text="단축키" />
-            <StackPanel Margin="10,0" Orientation="Horizontal">
-                <TextBlock Margin="10" Text="프로그램 종료" />
-                <TextBlock Margin="10" Text="Ctrl+Q" />
-            </StackPanel>
-            <StackPanel Margin="10,0" Orientation="Horizontal">
-                <TextBlock Margin="10" Text="창 숨기기/보이기" />
-                <TextBlock Margin="10" Text="Ctrl+Shift+F" />
-            </StackPanel>
-            <StackPanel Margin="10,0" Orientation="Horizontal">
-                <TextBlock Margin="10" Text="초기화" />
-                <TextBlock Margin="10" Text="F5" />
-            </StackPanel>
-            <StackPanel Margin="10,0" Orientation="Horizontal">
-                <TextBlock Margin="10" Text="배경 새로고침" />
-                <TextBlock Margin="10" Text="F6" />
-            </StackPanel>
-            <StackPanel Margin="10,0" Orientation="Horizontal">
-                <TextBlock Margin="10" Text="배경 끄기/켜기" />
-                <TextBlock Margin="10" Text="F7" />
-            </StackPanel>
-            <StackPanel Margin="10,0" Orientation="Horizontal">
-                <TextBlock Margin="10" Text="스크린샷 촬영" />
-                <TextBlock Margin="10" Text="PrintScreen" />
+            <TextBlock Margin="10,10,0,12" Text="단축키" />
+            <StackPanel Margin="10,0">
+                <StackPanel Margin="10,5" Orientation="Horizontal">
+                    <TextBlock FontSize="12" Text="프로그램 종료" />
+                    <TextBlock
+                        Margin="10,0"
+                        FontSize="12"
+                        Text="Ctrl+Q" />
+                </StackPanel>
+                <StackPanel Margin="10,5" Orientation="Horizontal">
+                    <TextBlock FontSize="12" Text="창 숨기기/보이기" />
+                    <TextBlock
+                        Margin="10,0"
+                        FontSize="12"
+                        Text="Ctrl+Shift+F" />
+                </StackPanel>
+                <StackPanel Margin="10,5" Orientation="Horizontal">
+                    <TextBlock FontSize="12" Text="초기화" />
+                    <TextBlock
+                        Margin="10,0"
+                        FontSize="12"
+                        Text="F5" />
+                </StackPanel>
+                <StackPanel Margin="10,5" Orientation="Horizontal">
+                    <TextBlock FontSize="12" Text="배경 새로고침" />
+                    <TextBlock
+                        Margin="10,0"
+                        FontSize="12"
+                        Text="F6" />
+                </StackPanel>
+                <StackPanel Margin="10,5" Orientation="Horizontal">
+                    <TextBlock FontSize="12" Text="배경 끄기/켜기" />
+                    <TextBlock
+                        Margin="10,0"
+                        FontSize="12"
+                        Text="F7" />
+                </StackPanel>
+                <StackPanel Margin="10,5" Orientation="Horizontal">
+                    <TextBlock FontSize="12" Text="스크린샷 촬영" />
+                    <TextBlock
+                        Margin="10,0"
+                        FontSize="12"
+                        Text="PrintScreen" />
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </Grid>

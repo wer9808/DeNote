@@ -146,7 +146,7 @@ namespace DeNote.Views
         {
             if (e.Key == Key.Q && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
-                Application.Current?.Shutdown();
+                Application.Current?.Shutdown(0);
             }
             else if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
@@ -157,6 +157,11 @@ namespace DeNote.Views
             {
                 DrawingCanvasControl.OnPreviewKeyDown(sender, e);
             }
+        }
+
+        private void Window_PreviewStylusDown(object sender, StylusDownEventArgs e)
+        {
+
         }
     }
 }

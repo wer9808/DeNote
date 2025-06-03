@@ -325,6 +325,9 @@ namespace DeNote.Models.Drawing
                     shapePath.LineTo(
                         Math.Max(StartPoint.X, EndPoint.X),
                         Math.Max(StartPoint.Y, EndPoint.Y));
+                    shapePath.LineTo(
+                        (StartPoint.X + EndPoint.X) / 2,
+                        Math.Min(StartPoint.Y, EndPoint.Y));
                     shapePath.Close();
                     break;
                 case QIShapeType.Line:

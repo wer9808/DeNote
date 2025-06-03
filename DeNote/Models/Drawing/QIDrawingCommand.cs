@@ -30,33 +30,21 @@ namespace DeNote.Models.Drawing
             this._drawingObject = drawingObject;
         }
 
-        private bool _isExecuting = false;
         public event EventHandler? CanExecuteChanged;
 
         public bool CanExecute(object? parameter)
         {
-            return !_isExecuting;
+            return true;
         }
 
         public async void Execute(object? parameter)
         {
-            if (!CanExecute(parameter)) return;
             await ExecuteAsync();
         }
 
         private Task ExecuteAsync()
         {
-            try
-            {
-                _isExecuting = true;
-                _context.CommandManager.RaiseCanExecuteChanged(CanExecute(null));
-                _context.Objects.Add(_drawingObject);
-            }
-            finally
-            {
-                _isExecuting = false;
-                _context.CommandManager.RaiseCanExecuteChanged(CanExecute(null));
-            }
+            _context.Objects.Add(_drawingObject);
 
             return Task.CompletedTask;
         }
@@ -69,19 +57,7 @@ namespace DeNote.Models.Drawing
 
         public Task Undo()
         {
-            if (!CanExecute(null))
-                return Task.CompletedTask;
-            try
-            {
-                _isExecuting = true;
-                _context.CommandManager.RaiseCanExecuteChanged(CanExecute(null));
-                _context.Objects.Remove(_drawingObject);
-            }
-            finally
-            {
-                _isExecuting = false;
-                _context.CommandManager.RaiseCanExecuteChanged(CanExecute(null));
-            }
+            _context.Objects.Remove(_drawingObject);
 
             return Task.CompletedTask;
         }
@@ -113,6 +89,7 @@ namespace DeNote.Models.Drawing
 
         private Task ExecuteAsync()
         {
+            if (!CanExecute(null)) return Task.CompletedTask;
             try
             {
                 _isExecuting = true;

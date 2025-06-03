@@ -35,6 +35,19 @@ namespace DeNote.Views
             DrawingCanvasMenu.RegisterCanvasControl(DrawingCanvasView);
 
             DrawingCanvasMenu.CloseRequested += (s, e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+
+            DrawingCanvasView.DrawStarted += DrawingCanvasView_DrawStarted;
+            DrawingCanvasView.DrawEnded += DrawingCanvasView_DrawEnded;
+        }
+
+        private void DrawingCanvasView_DrawStarted(object? sender, EventArgs e)
+        {
+            DrawingCanvasMenu.Visibility = Visibility.Hidden;
+        }
+
+        private void DrawingCanvasView_DrawEnded(object? sender, EventArgs e)
+        {
+            DrawingCanvasMenu.Visibility = Visibility.Visible;
         }
 
         public async void OnPreviewKeyDown(object? sender, KeyEventArgs e)
@@ -58,7 +71,6 @@ namespace DeNote.Views
             else if (e.Key == Key.F5)
             {
                 await DrawingCanvasView.Clear();
-                await DrawingCanvasView.CaptureBackgroundAsync();
             }
 
             else if (e.Key == Key.F6)

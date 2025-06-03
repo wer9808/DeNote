@@ -15,8 +15,16 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
-            </ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary>
+                    <Style TargetType="{x:Type Control}">
+                        <Setter Property="FontFamily" Value="Noto Sans KR" />
+                    </Style>
 
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Setter Property="FontFamily" Value="Noto Sans KR" />
+                    </Style>
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

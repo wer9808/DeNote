@@ -143,6 +143,7 @@ namespace DeNote.Models.Drawing
                 paint.StrokeCap = StrokeCap;
                 paint.StrokeJoin = StrokeJoin;
                 paint.Style = SKPaintStyle.Fill;
+                paint.IsAntialias = true;
                 canvas.DrawPath(Path, paint);
             }
         }

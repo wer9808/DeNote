@@ -6,44 +6,75 @@
     xmlns:local="clr-namespace:DeNote.Views.Settings"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:DeNote.ViewModels.Settings"
     Title="설정"
     Width="600"
     Height="450"
+    d:DataContext="{d:DesignInstance Type=vm:AppConfigWindowViewModel,
+                                     IsDesignTimeCreatable=True}"
     Loaded="Window_Loaded"
+    ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
+
     <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <TabControl Grid.Row="0">
-            <TabItem Header="일반">
-                <local:GeneralSettingsPage />
-            </TabItem>
-            <TabItem Header="경로">
-                <local:FilePathSettingsPage />
-            </TabItem>
-            <TabItem Header="도움말">
-                <local:AppUsageHelpPage />
-            </TabItem>
-        </TabControl>
 
-        <StackPanel
-            Grid.Row="1"
-            Margin="0,10,0,0"
-            HorizontalAlignment="Right"
-            Orientation="Horizontal">
-            <ui:Button
-                Width="80"
-                Margin="0,0,10,0"
-                Click="Save_Click"
-                Content="저장" />
-            <Button
-                Width="80"
-                Click="Cancel_Click"
-                Content="취소" />
-        </StackPanel>
+        <ListView
+            Grid.Column="0"
+            Width="150"
+            Margin="0,0,10,0"
+            ItemsSource="{Binding TabItems}"
+            SelectedItem="{Binding SelectedTabItem}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Header}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <Grid Grid.Column="1">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Margin="0,0,10,0">
+                <ContentControl Content="{Binding SelectedTabItem.Content}" />
+            </Grid>
+
+            <StackPanel
+                Grid.Row="1"
+                Margin="0,10,0,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <ui:Button
+                    Width="80"
+                    Margin="0,0,10,0"
+                    Click="Save_Click"
+                    Content="확인" />
+                <ui:Button
+                    Width="80"
+                    Click="Cancel_Click"
+                    Content="취소" />
+            </StackPanel>
+        </Grid>
     </Grid>
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:GeneralSettingsPageViewModel}">
+            <local:GeneralSettingsPage />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:FilePathSettingsPageViewModel}">
+            <local:FilePathSettingsPage />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:AppUsageHelpViewModel}">
+            <local:AppUsageHelpPage />
+        </DataTemplate>
+    </Window.Resources>
 </Window>

@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using DeNote.ViewModels.Settings;
 
 namespace DeNote.Views.Settings
 {
@@ -22,6 +23,8 @@ namespace DeNote.Views.Settings
         public AppConfigWindow()
         {
             InitializeComponent();
+            AppConfig.Load();
+            this.DataContext = new AppConfigWindowViewModel();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -34,7 +37,21 @@ namespace DeNote.Views.Settings
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            AppConfig.Save(); // AppSettings의 모든 변경 사항을 INI 파일에 저장
+            if (DataContext is AppConfigWindowViewModel viewModel)
+            {
+                try
+                {
+                    // 설정 저장 로직을 호출합니다.
+                    viewModel.SaveSettingsCommand.Execute(null);
+                }
+                catch (Exception ex)
+                {
+                    // 예외 발생 시 사용자에게 알립니다.
+                    MessageBox.Show($"설정 저장 중 오류가 발생했습니다", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return; // 오류 발생 시 저장하지 않고 종료
+                }
+            }
+
             MessageBox.Show("설정이 저장되었습니다.", "저장 완료", MessageBoxButton.OK, MessageBoxImage.Information);
             this.Close(); // 창 닫기
         }
@@ -44,6 +61,10 @@ namespace DeNote.Views.Settings
             // 취소 시에는 저장하지 않고 창을 닫습니다.
             // 만약 취소 시 초기 상태로 되돌리고 싶다면, Load()를 다시 호출하거나
             // DataContext를 초기화하는 로직이 필요할 수 있습니다.
+            if (DataContext is AppConfigWindowViewModel viewModel)
+            {
+                viewModel.CancelSettingsCommand.Execute(null);
+            }
             this.Close();
         }
     }

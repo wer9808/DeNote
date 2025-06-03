@@ -24,7 +24,6 @@ namespace DeNote.Views.Settings
         public FilePathSettingsPage()
         {
             InitializeComponent();
-            DataContext = new FilePathSettingsPageViewModel();
         }
 
     }

@@ -8,12 +8,19 @@
     <UseWPF>true</UseWPF>
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>AnyCPU;x64</Platforms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\icon_highlighter.png" />
-    <None Remove="Resources\icon_pen.png" />
-    <None Remove="Resources\icon_shape.png" />
+    <Resource Include="Resources\icon_tools_circle_white.png" />
+    <Resource Include="Resources\icon_tools_eraser_white.png" />
+    <Resource Include="Resources\icon_tools_highlighter_white.png" />
+    <Resource Include="Resources\icon_tools_line_white.png" />
+    <Resource Include="Resources\icon_tools_pencil_white.png" />
+    <Resource Include="Resources\icon_tools_rect_white.png" />
+    <Resource Include="Resources\icon_tools_shape_white.png" />
+    <Resource Include="Resources\icon_tools_thickness_white.png" />
+    <Resource Include="Resources\icon_tools_triangle_white.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,9 +34,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\icon_highlighter.png" />
-    <Resource Include="Resources\icon_pen.png" />
-    <Resource Include="Resources\icon_shape.png" />
+    <Compile Update="Resources\HelpMessages.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>HelpMessages.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\HelpMessages.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>HelpMessages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

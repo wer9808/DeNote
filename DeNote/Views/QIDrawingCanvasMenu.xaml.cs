@@ -1,7 +1,9 @@
 ﻿using DeNote.Services;
 using DeNote.Views.Settings;
+using ScreenRecorderLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,7 +26,7 @@ namespace DeNote.Views
     {
         private QIDrawingCanvasView _canvasView;
 
-        private ScreenRecorder screenRecorder = new ScreenRecorder();
+        private ScreenRecorder _screenRecorder = new ScreenRecorder();
         private AppConfigWindow? _appConfigWindow;
         public QIDrawingCanvasMenu()
         {
@@ -39,8 +41,9 @@ namespace DeNote.Views
             }
 
             _canvasView = canvasView;
+            _screenRecorder = new ScreenRecorder();
+            _screenRecorder.RecordingFailed += ScreenRecorder_RecordingFailed;
         }
-
 
         private async void UndoBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -56,17 +59,39 @@ namespace DeNote.Views
             await _canvasView.Clear();
         }
 
+        private void ScreenRecorder_RecordingFailed(object? sender, RecordingFailedEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                RecordBtn.Content = "🎦";
+                MessageBox.Show($"녹화에 실패했습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+            });
+        }
+
         private void RecordBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (screenRecorder.IsRecording)
+            if (_screenRecorder.IsRecording)
             {
-                screenRecorder.StopRecording();
+                _screenRecorder.StopRecording();
                 RecordBtn.Content = "🎦";
             }
             else
             {
-                screenRecorder.StartRecording();
-                RecordBtn.Content = "⏹️";
+                try
+                {
+                    _screenRecorder.StartRecording();
+                    RecordBtn.Content = "⏹️";
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    RecordBtn.Content = "🎦";
+                    MessageBox.Show($"녹화를 시작할 수 없습니다. 녹화 영상 저장 경로에 대한 접근 권한이 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (Exception ex)
+                {
+                    RecordBtn.Content = "🎦";
+                    MessageBox.Show($"녹화를 시작할 수 없습니다: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private void ToggleBackgroundBtn_Click(object sender, RoutedEventArgs e)
@@ -105,7 +130,7 @@ namespace DeNote.Views
 
         public void Dispose()
         {
-            screenRecorder.Dispose();
+            _screenRecorder.Dispose();
         }
 
         public event EventHandler? CloseRequested;

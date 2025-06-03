@@ -8,6 +8,7 @@
     d:DesignHeight="450"
     d:DesignWidth="800"
     Focusable="True"
+    x:Name="DrawingCanvasControl"
     mc:Ignorable="d">
     <Grid>
         <local:QIDrawingCanvasView x:Name="DrawingCanvasView" Panel.ZIndex="0" />

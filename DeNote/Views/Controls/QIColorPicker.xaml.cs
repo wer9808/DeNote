@@ -19,12 +19,12 @@ namespace DeNote.Views.Controls
     /// <summary>
     /// ColorPickerPopup.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class ColorPickerPopup : UserControl
+    public partial class QIColorPicker : UserControl
     {
         // 표시할 색상 목록
         public List<Color> ColorPreset { get; set; }
 
-        public ColorPickerPopup()
+        public QIColorPicker()
         {
             InitializeComponent();
             InitializeColors();
@@ -107,7 +107,7 @@ namespace DeNote.Views.Controls
 
         // 선택된 색상을 저장하고 외부에 알리기 위한 Dependency Property
         public static readonly DependencyProperty SelectedColorProperty =
-            DependencyProperty.Register("SelectedColor", typeof(Color), typeof(ColorPickerPopup),
+            DependencyProperty.Register("SelectedColor", typeof(Color), typeof(QIColorPicker),
                                         new PropertyMetadata(Colors.Black, OnSelectedColorPropertyChanged)); // 기본값: Black
 
         public Color SelectedColor
@@ -123,7 +123,7 @@ namespace DeNote.Views.Controls
         // SelectedColor가 변경될 때 발생하는 라우트된 이벤트 정의
         public static readonly RoutedEvent SelectedColorChangedEvent =
             EventManager.RegisterRoutedEvent("SelectedColorChanged", RoutingStrategy.Bubble,
-                                              typeof(RoutedPropertyChangedEventHandler<Color>), typeof(ColorPickerPopup));
+                                              typeof(RoutedPropertyChangedEventHandler<Color>), typeof(QIColorPicker));
 
         // CLR 이벤트 래퍼
         public event RoutedPropertyChangedEventHandler<Color> SelectedColorChanged
@@ -135,7 +135,7 @@ namespace DeNote.Views.Controls
         // SelectedColorProperty의 변경 콜백에서 이벤트를 발생시키는 메서드
         private static void OnSelectedColorPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ColorPickerPopup instance = (ColorPickerPopup)d;
+            QIColorPicker instance = (QIColorPicker)d;
             Color oldValue = (Color)e.OldValue;
             Color newValue = (Color)e.NewValue;
             instance.OnSelectedColorChanged(oldValue, newValue);
@@ -150,86 +150,12 @@ namespace DeNote.Views.Controls
 
         #endregion
 
-        #region IsOpen Dependency Property
-
-        // 팝업의 열림/닫힘 상태를 제어하기 위한 Dependency Property
-        public static readonly DependencyProperty IsOpenProperty =
-            DependencyProperty.Register("IsOpen", typeof(bool), typeof(ColorPickerPopup),
-                                        new PropertyMetadata(false));
-
-        public bool IsOpen
-        {
-            get { return (bool)GetValue(IsOpenProperty); }
-            set { SetValue(IsOpenProperty, value); }
-        }
-
-        #endregion
-
-        #region PlacementTarget Dependency Property (추가된 부분)
-
-        // Popup의 PlacementTarget을 외부에서 설정할 수 있도록 Dependency Property 추가
-        public static readonly DependencyProperty PlacementTargetProperty =
-            DependencyProperty.Register("PlacementTarget", typeof(UIElement), typeof(ColorPickerPopup),
-                                        new PropertyMetadata(null));
-
-        public UIElement PlacementTarget
-        {
-            get { return (UIElement)GetValue(PlacementTargetProperty); }
-            set { SetValue(PlacementTargetProperty, value); }
-        }
-
-        #endregion
-
-        #region Placement Dependency Property
-
-        // Popup의 Placement를 외부에서 설정할 수 있도록 Dependency Property 추가
-        public static readonly DependencyProperty PlacementProperty =
-            DependencyProperty.Register("Placement", typeof(PlacementMode), typeof(ColorPickerPopup),
-                                        new PropertyMetadata(PlacementMode.Bottom));
-
-        public PlacementMode Placement
-        {
-            get { return (PlacementMode)GetValue(PlacementProperty); }
-            set { SetValue(PlacementProperty, value); }
-        }
-
-        #endregion
-
-        #region HorizontalOffset Dependency Property
-
-        // Popup의 수평 오프셋을 제어하기 위한 Dependency Property
-        public static readonly DependencyProperty HorizontalOffsetProperty =
-            DependencyProperty.Register("HorizontalOffset", typeof(double), typeof(ColorPickerPopup),
-                                        new PropertyMetadata(0.0));
-
-        public double HorizontalOffset
-        {
-            get { return (double)GetValue(HorizontalOffsetProperty); }
-            set { SetValue(HorizontalOffsetProperty, value); }
-        }
-        #endregion
-
-        #region VerticalOffset Dependency Property
-
-        // Popup의 수직 오프셋을 제어하기 위한 Dependency Property
-        public static readonly DependencyProperty VerticalOffsetProperty =
-            DependencyProperty.Register("VerticalOffset", typeof(double), typeof(ColorPickerPopup),
-                                        new PropertyMetadata(0.0));
-
-        public double VerticalOffset
-        {
-            get { return (double)GetValue(VerticalOffsetProperty); }
-            set { SetValue(VerticalOffsetProperty, value); }
-        }
-        #endregion
-
         // 색상 버튼 클릭 이벤트 핸들러
         private void ColorButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is Color color)
             {
                 SelectedColor = color; // 선택된 색상 업데이트
-                IsOpen = false;        // 팝업 닫기
             }
         }
     }

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Documents;
 
 namespace DeNote
@@ -28,16 +30,13 @@ namespace DeNote
         // INI 파일 불러오기 및 없을 경우 기본값 설정
         public static void Load()
         {
-            _data.Clear(); // 기존 데이터 초기화
+            _data.Clear();
 
             if (!File.Exists(_iniFilePath))
             {
-                Console.WriteLine("INI 파일이 존재하지 않습니다. 기본 설정으로 생성합니다.");
-                // 파일이 없으므로, 기본 설정을 _data에 채웁니다.
+                Debug.WriteLine("INI 파일이 존재하지 않습니다. 기본 설정으로 생성합니다.");
                 SetDefaultSettings();
-                Save(); // 기본 설정으로 파일을 생성하고 저장합니다.
-                _isLoaded = true;
-                return;
+                Save();
             }
 
             string currentSection = string.Empty;
@@ -78,10 +77,7 @@ namespace DeNote
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"INI 파일 로드 중 오류 발생: {ex.Message}");
-                // 로드 실패 시, 기본 설정을 다시 채우고 저장하는 것을 고려할 수 있습니다.
-                // SetDefaultSettings();
-                // Save();
+                Debug.WriteLine($"INI 파일 로드 중 오류 발생: {ex.Message}");
             }
         }
 
@@ -92,14 +88,10 @@ namespace DeNote
             SetString("General", "AppName", "DeNote");
             SetInt("General", "Version", 1);
 
-            // Network 섹션
-            SetString("Network", "ServerIP", "127.0.0.1");
-            SetInt("Network", "Port", 8080);
-            SetInt("Network", "TimeoutMs", 5000);
-
             // FilePath 섹션
-            string videoSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DeNote", "Records");
-            string imageSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DeNote", "Screenshots");
+            string videoSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "DeNote", "Records");
+            string imageSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "DeNote", "Screenshots");
+
             SetString("FilePath", "VideoSavePath", videoSavePath);
             SetString("FilePath", "ImageSavePath", imageSavePath);
 
@@ -108,10 +100,18 @@ namespace DeNote
 
 
         // INI 파일 저장하기
+
         public static void Save()
         {
             try
             {
+                // 저장 전 폴더 존재 확인 및 생성 (선택적이지만 권장)
+                string? directory = Path.GetDirectoryName(_iniFilePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
                 using (StreamWriter sw = new StreamWriter(_iniFilePath))
                 {
                     foreach (var sectionEntry in _data)
@@ -124,24 +124,26 @@ namespace DeNote
                         sw.WriteLine();
                     }
                 }
+                Debug.WriteLine($"INI 파일 저장 완료: {_iniFilePath}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"INI 파일 저장 중 오류 발생: {ex.Message}");
+                // 사용자에게 오류를 알리는 것이 좋습니다.
+                Debug.WriteLine($"INI 파일 저장 중 오류 발생: {ex.Message}");
+                MessageBox.Show($"설정 파일 저장에 실패했습니다: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         // 값 가져오기 (string)
-        public static string GetString(string section, string key, string defaultValue = "")
+        public static string? GetString(string section, string key)
         {
-            if (!_isLoaded) Load();
             if (_data.ContainsKey(section) && _data[section].ContainsKey(key))
             {
                 return _data[section][key];
             }
             // 기본값을 설정했는데, _data에 없는 키라면 SetString을 호출하여 추가하지 않습니다.
             // 이는 GetString 호출 시 파일에 바로 쓰이는 것을 방지합니다.
-            return defaultValue;
+            return null;
         }
 
         // 값 설정하기 (string)
@@ -151,13 +153,14 @@ namespace DeNote
             {
                 _data[section] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             }
-            _data[section][key] = value;
+            _data[section][key] = value; // 이미 실행했다고 가정
         }
 
         // 특정 타입의 값 가져오기 (예: int)
         public static int GetInt(string section, string key, int defaultValue = 0)
         {
-            string value = GetString(section, key, defaultValue.ToString()); // 기본값을 문자열로 넘겨 TryParse에서 사용
+            string? value = GetString(section, key); // 기본값을 문자열로 넘겨 TryParse에서 사용
+            if (value == null) return defaultValue; // 값이 없으면 기본값 반환
             if (int.TryParse(value, out int result))
             {
                 return result;
@@ -174,8 +177,9 @@ namespace DeNote
         // 값 가져오기 (bool)
         public static bool GetBool(string section, string key, bool defaultValue = false)
         {
-            string value = GetString(section, key, defaultValue.ToString()).ToLower(); // 소문자로 변환하여 비교
-            return value == "true";
+            string? value = GetString(section, key); // 기본값을 문자열로 넘겨 TryParse에서 사용
+            if (value == null) return defaultValue; // 값이 없으면 기본값 반환
+            return value.ToLower() == "true"; // 소문자로 변환하여 비교
         }
 
         // 값 설정하기 (bool)
@@ -187,7 +191,6 @@ namespace DeNote
         // 키 삭제하기
         public static void RemoveKey(string section, string key)
         {
-            if (!_isLoaded) Load();
             if (_data.ContainsKey(section) && _data[section].ContainsKey(key))
             {
                 _data[section].Remove(key);
@@ -197,7 +200,6 @@ namespace DeNote
         // 섹션 삭제하기
         public static void RemoveSection(string section)
         {
-            if (!_isLoaded) Load();
             if (_data.ContainsKey(section))
             {
                 _data.Remove(section);
@@ -205,24 +207,22 @@ namespace DeNote
         }
 
         // 예시: 특정 설정 프로퍼티 (편의성을 위해 추가)
-        public static string AppName
+        public static string? AppName
         {
-            get => GetString("General", "AppName", "DeNote");
+            get => GetString("General", "AppName");
             set => SetString("General", "AppName", value);
         }
 
-        public static string VideoSavePath
+        public static string? VideoSavePath
         {
-            get => GetString("FilePath", "VideoSavePath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DeNote", "Records"));
+            get => GetString("FilePath", "VideoSavePath");
             set => SetString("FilePath", "VideoSavePath", value);
         }
 
-        public static string ImageSavePath
+        public static string? ImageSavePath
         {
-            get => GetString("FilePath", "ImageSavePath", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DeNote", "Screenshots"));
+            get => GetString("FilePath", "ImageSavePath");
             set => SetString("FilePath", "ImageSavePath", value);
         }
     }
-
-
 }
