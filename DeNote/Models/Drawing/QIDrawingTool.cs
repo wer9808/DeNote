@@ -47,6 +47,7 @@ namespace DeNote.Models.Drawing
         Task HandleInput(QIDrawingInputData input, QIDrawingContext context);
         void ApplySettings(QIDrawingToolSettings settings);
         QIDrawingToolSettings GetSettings();
+        void CancelDrawing(QIDrawingContext context);
     }
 
     public class QIPenTool : IQIDrawingTool
@@ -134,6 +135,17 @@ namespace DeNote.Models.Drawing
         public QIDrawingToolSettings GetSettings()
         {
             return Settings.Clone();
+        }
+
+        public void CancelDrawing(QIDrawingContext context)
+        {
+            // 현재 스트로크 취소
+            if (CurrentStroke != null)
+            {
+                context.ActiveObject = null;
+                CurrentStroke = null;
+                context.InvalidateVisual();
+            }
         }
     }
 
@@ -229,6 +241,17 @@ namespace DeNote.Models.Drawing
         public QIDrawingToolSettings GetSettings()
         {
             return Settings.Clone();
+        }
+
+        public void CancelDrawing(QIDrawingContext context)
+        {
+            // 현재 스트로크 취소
+            if (CurrentStroke != null)
+            {
+                context.ActiveObject = null;
+                CurrentStroke = null;
+                context.InvalidateVisual();
+            }
         }
     }
 
@@ -351,6 +374,17 @@ namespace DeNote.Models.Drawing
         {
             return Settings.Clone();
         }
+
+        public void CancelDrawing(QIDrawingContext context)
+        {
+            // 현재 스트로크 취소
+            if (CurrentShape != null)
+            {
+                context.ActiveObject = null;
+                CurrentShape = null;
+                context.InvalidateVisual();
+            }
+        }
     }
 
     public class QIEraserTool : IQIDrawingTool
@@ -397,6 +431,12 @@ namespace DeNote.Models.Drawing
         public QIDrawingToolSettings GetSettings()
         {
             return Settings.Clone();
+        }
+
+        public void CancelDrawing(QIDrawingContext context)
+        {
+            // 현재 지우기 작업 취소
+            context.CancelErasing();
         }
     }
 }

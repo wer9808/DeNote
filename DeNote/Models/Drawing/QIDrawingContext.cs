@@ -197,14 +197,28 @@ namespace DeNote.Models.Drawing
 
         public async Task EraseActualObjects()
         {
-            var actualEraserPath = eraserPaint.GetFillPath(eraserPath);
-            var eraserBounds = actualEraserPath.ComputeTightBounds();
+            if (IsErasing)
+            {
+                var actualEraserPath = eraserPaint.GetFillPath(eraserPath);
+                var eraserBounds = actualEraserPath.ComputeTightBounds();
 
-            // QuadTree를 사용하여 교차하는 객체 찾기
-            // var intersectingObjects = QuadTree.Retrieve(Objects.ToList(), eraserBounds);
+                // QuadTree를 사용하여 교차하는 객체 찾기
+                // var intersectingObjects = QuadTree.Retrieve(Objects.ToList(), eraserBounds);
 
-            var eraseCommand = new EraseCommand(this, actualEraserPath);
-            await CommandManager.Execute(eraseCommand);
+                var eraseCommand = new EraseCommand(this, actualEraserPath);
+                await CommandManager.Execute(eraseCommand);
+            }
+        }
+
+        public void CancelErasing()
+        {
+            if (IsErasing)
+            {
+                IsErasing = false;
+                EraserBitmap.Dispose();
+                eraserPath.Dispose();
+                InvalidateVisual();
+            }
         }
 
         // 이벤트

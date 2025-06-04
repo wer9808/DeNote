@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -281,14 +282,19 @@ namespace DeNote.Views
 
             var requestType = e.MenuRequestType;
 
-            if (requestType == QIDrawingCanvasView.MenuRequestType.Open)
+            Debug.WriteLine($"Toolbar Menu Request: {requestType}");
+
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                ToolbarPopup.IsOpen = true;
-            }
-            else if (requestType == QIDrawingCanvasView.MenuRequestType.Close)
-            {
-                ToolbarPopup.IsOpen = false;
-            }
+                if (requestType == QIDrawingCanvasView.MenuRequestType.Open)
+                {
+                    ToolbarPopup.IsOpen = true;
+                }
+                else if (requestType == QIDrawingCanvasView.MenuRequestType.Close)
+                {
+                    ToolbarPopup.IsOpen = false;
+                }
+            });
 
         }
 

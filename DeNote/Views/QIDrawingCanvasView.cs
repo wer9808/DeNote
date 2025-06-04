@@ -36,6 +36,8 @@ namespace DeNote.Views
         private bool _isBackgroundCaptured = false;
         public bool IsBackgroundCaptured => _isBackgroundCaptured;
         public bool IsCapturing { get; private set; }
+        public bool IsGestureCapturing { get; private set; }
+
         public event EventHandler BackgroundCaptureCompleted;
 
         private SKColor backgroundColor = SKColors.White;
@@ -62,6 +64,8 @@ namespace DeNote.Views
                 App.Current.Dispatcher.Invoke(() => InvalidateVisual());
             };
             toolManager.ToolChanged += OnToolChanged;
+            toolManager.GestureCapturingStarted += OnGestureCapturingStart;
+            toolManager.GestureCapturingEnded += OnGestureCapturingEnd;
 
             PaintSurface += OnPaintSurface;
         }
@@ -113,7 +117,7 @@ namespace DeNote.Views
             }
 
             // 활성 객체 렌더링 (생성/편집 중)
-            if (drawingContext.ActiveObject != null)
+            if (!IsGestureCapturing && drawingContext.ActiveObject != null)
             {
                 drawingContext.ActiveObject.Render(canvas);
             }
@@ -276,6 +280,8 @@ namespace DeNote.Views
 
         private async Task StartDrawing(QIPoint point)
         {
+            MenuRequested.Invoke(this, new MenuRequestedEventArgs { MenuRequestType = MenuRequestType.Close });
+
             await toolManager.HandleInput(new QIDrawingInputData
             {
                 Type = QIDrawingInputType.Down,
@@ -301,6 +307,7 @@ namespace DeNote.Views
             };
 
             await StartDrawing(startPosition);
+            CaptureMouse();
             DrawStarted.Invoke(this, e);
 
             e.Handled = true;
@@ -356,13 +363,7 @@ namespace DeNote.Views
             }
 
             var point = e.GetPosition(this);
-            var mousePosition = new QIPoint
-            {
-                X = (float)point.X,
-                Y = (float)point.Y,
-                Pressure = 1.0f // 마우스는 필압 정보 없음
-            };
-            MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MousePosition = mousePosition, MenuRequestType = MenuRequestType.Open });
+            MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MenuRequestType = MenuRequestType.Open });
             e.Handled = true;
         }
 
@@ -376,12 +377,16 @@ namespace DeNote.Views
             int i = 0;
             var point = points[i];
 
+            Debug.WriteLine($"StylusDown : {point.X}, {point.Y}");
+
             await StartDrawing(new QIPoint
             {
                 X = (float)point.X,
                 Y = (float)point.Y,
                 Pressure = point.PressureFactor
             });
+
+            CaptureStylus();
 
             for (i = 1; i < points.Count; i++)
             {
@@ -427,8 +432,6 @@ namespace DeNote.Views
 
         protected override async void OnStylusUp(StylusEventArgs e)
         {
-            if (!drawingContext.IsDrawing) return;
-
             var points = e.GetStylusPoints(this);
 
             int i;
@@ -457,7 +460,7 @@ namespace DeNote.Views
 
             await toolManager.HandleInput(endInput);
 
-            // ReleaseStylusCapture();
+            ReleaseStylusCapture();
             drawingContext.IsDrawing = false;
             DrawEnded.Invoke(this, e);
             e.Handled = true;
@@ -510,6 +513,27 @@ namespace DeNote.Views
             }
         }
 
+        private void OnGestureCapturingEnd(object? sender, GestureCapturedEventArgs e)
+        {
+            Debug.WriteLine($"Gesture captured: {e.Gesture}");
+            if (e.Gesture == QIDrawingGesture.Hold)
+            {
+                MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MenuRequestType = MenuRequestType.Open });
+            }
+            IsGestureCapturing = false;
+        }
+
+        private void OnGestureCapturingStart(object? sender, EventArgs e)
+        {
+            Debug.WriteLine("Gesture capturing started");
+            if (IsCapturing)
+            {
+                // 캡처 중일 때는 메뉴 요청을 하지 않음
+                return;
+            }
+            IsGestureCapturing = true;
+        }
+
         // 외부 이벤트
         public event EventHandler<ToolChangedEventArgs> ToolChanged;
 
@@ -526,7 +550,6 @@ namespace DeNote.Views
 
         public class MenuRequestedEventArgs : EventArgs
         {
-            public QIPoint MousePosition { get; set; }
             public required MenuRequestType MenuRequestType { get; set; }
         }
     }

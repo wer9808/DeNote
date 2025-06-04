@@ -5,8 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using DeNote.Models.DeNote.Models;
 using DeNote.Models.Drawing;
+using SkiaSharp;
 
 namespace DeNote.Services
 {
@@ -25,6 +27,11 @@ namespace DeNote.Services
             get => _activeToolType;
             set => SwitchTool(value);
         }
+
+        private bool _isGestureCapturing = false;
+        private SKPoint? _holdStartPoint = null;
+        public DispatcherTimer HoldGestureTimer { get; private set; }
+
         // 입력 데이터 컨텍스트
         public QIDrawingContext Context { get; set; }
 
@@ -44,6 +51,14 @@ namespace DeNote.Services
             _settingsStore[QIDrawingToolType.Highlighter] = new QIHighlighterToolSettings();
             _settingsStore[QIDrawingToolType.Shape] = new QIShapeToolSettings();
             _settingsStore[QIDrawingToolType.Eraser] = new QIEraserToolSettings();
+
+            HoldGestureTimer = new DispatcherTimer();
+            HoldGestureTimer.Interval = TimeSpan.FromMilliseconds(500); // 0.5초 간격
+            HoldGestureTimer.Tick += (s, e) =>
+            {
+                CaptureHoldGesture();
+                HoldGestureTimer.Stop(); // 타이머 중지
+            };
 
             // 기본 도구 설정
             SwitchTool(QIDrawingToolType.Pen);
@@ -95,13 +110,80 @@ namespace DeNote.Services
         // 입력 처리
         public async Task HandleInput(QIDrawingInputData input)
         {
+            CaptureGesture(input);
             if (_activeTool != null)
             {
                 await _activeTool.HandleInput(input, Context);
             }
         }
 
-        internal QIDrawingToolSettings? GetCurrentSettings()
+        private void CaptureGesture(QIDrawingInputData input)
+        {
+            if (input.Type == QIDrawingInputType.Down)
+            {
+                _holdStartPoint = new SKPoint(input.X, input.Y);
+                StartCapturingHoldGesture();
+            }
+            else if (input.Type == QIDrawingInputType.Move)
+            {
+                if (_isGestureCapturing)
+                {
+                    var currentPoint = new SKPoint(input.X, input.Y);
+                    if (_holdStartPoint == null ||
+                        (currentPoint - _holdStartPoint.Value).Length > 10)
+                    {
+                        StopCapturingHoldGesture();
+                    }
+                }
+            }
+            else if (input.Type == QIDrawingInputType.Up)
+            {
+                if (_isGestureCapturing)
+                {
+                    StopCapturingHoldGesture();
+                }
+            }
+        }
+
+        private void StartCapturingHoldGesture()
+        {
+            if (!_isGestureCapturing)
+            {
+                _isGestureCapturing = true;
+                GestureCapturingStarted?.Invoke(this, EventArgs.Empty);
+                HoldGestureTimer.Start();
+            }
+        }
+
+        private void CaptureHoldGesture()
+        {
+            if (_isGestureCapturing)
+            {
+                _isGestureCapturing = false;
+                GestureCapturingEnded?.Invoke(this, new GestureCapturedEventArgs(QIDrawingGesture.Hold));
+                CancelDrawing();
+            }
+        }
+
+        private void StopCapturingHoldGesture()
+        {
+            if (_isGestureCapturing)
+            {
+                _isGestureCapturing = false;
+                HoldGestureTimer.Stop();
+                GestureCapturingEnded?.Invoke(this, new GestureCapturedEventArgs(QIDrawingGesture.None)); // restore event for gesture captured
+            }
+        }
+
+        private void CancelDrawing()
+        {
+            if (_activeTool != null)
+            {
+                _activeTool.CancelDrawing(Context);
+            }
+        }
+
+        public QIDrawingToolSettings? GetCurrentSettings()
         {
             return _activeTool?.GetSettings();
         }
@@ -109,6 +191,8 @@ namespace DeNote.Services
         // 이벤트
         public event EventHandler<ToolChangedEventArgs> ToolChanged;
         public event EventHandler<ToolSettingsChangedEventArgs> ToolSettingsChanged;
+        public event EventHandler<EventArgs> GestureCapturingStarted;
+        public event EventHandler<GestureCapturedEventArgs> GestureCapturingEnded;
     }
 
 
@@ -132,6 +216,21 @@ namespace DeNote.Services
         public ToolSettingsChangedEventArgs(QIDrawingToolSettings settings)
         {
             Settings = settings;
+        }
+    }
+
+    public enum QIDrawingGesture
+    {
+        None,
+        Hold,
+    }
+
+    public class GestureCapturedEventArgs : EventArgs
+    {
+        public QIDrawingGesture Gesture { get; }
+        public GestureCapturedEventArgs(QIDrawingGesture gesture)
+        {
+            Gesture = gesture;
         }
     }
 }
