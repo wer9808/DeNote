@@ -83,8 +83,7 @@
                             BorderThickness="0"
                             Click="ThicknessButton_Click"
                             Cursor="Hand"
-                            Opacity="0.7"
-                            ToolTip="{Binding}">
+                            Opacity="0.7">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <ContentPresenter />

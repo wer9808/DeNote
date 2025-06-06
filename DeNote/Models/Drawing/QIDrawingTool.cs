@@ -47,6 +47,7 @@ namespace DeNote.Models.Drawing
         Task HandleInput(QIDrawingInputData input, QIDrawingContext context);
         void ApplySettings(QIDrawingToolSettings settings);
         QIDrawingToolSettings GetSettings();
+        void CancelDrawing(QIDrawingContext context);
     }
 
     public class QIPenTool : IQIDrawingTool
@@ -79,6 +80,7 @@ namespace DeNote.Models.Drawing
                     CurrentStroke = (QIPenStroke)CreateDrawingObject();
                     AddPoint(CurrentStroke, input);
                     context.ActiveObject = CurrentStroke;
+                    context.IsDrawing = true;
                     break;
 
                 case QIDrawingInputType.Move:
@@ -97,6 +99,7 @@ namespace DeNote.Models.Drawing
                         AddPoint(CurrentStroke, input);
                         FinalizeStroke(CurrentStroke);
                         await context.AddDrawingObject(CurrentStroke);
+                        context.IsDrawing = false;
                         CurrentStroke = null;
                         context.ActiveObject = null;
                     }
@@ -134,6 +137,18 @@ namespace DeNote.Models.Drawing
         public QIDrawingToolSettings GetSettings()
         {
             return Settings.Clone();
+        }
+
+        public void CancelDrawing(QIDrawingContext context)
+        {
+            // 현재 스트로크 취소
+            if (CurrentStroke != null)
+            {
+                context.ActiveObject = null;
+                CurrentStroke = null;
+                context.IsDrawing = false;
+                context.InvalidateVisual();
+            }
         }
     }
 
@@ -174,6 +189,7 @@ namespace DeNote.Models.Drawing
                     CurrentStroke = (QIHighlighter)CreateDrawingObject();
                     AddPoint(CurrentStroke, input);
                     context.ActiveObject = CurrentStroke;
+                    context.IsDrawing = true;
                     break;
 
                 case QIDrawingInputType.Move:
@@ -192,6 +208,7 @@ namespace DeNote.Models.Drawing
                         AddPoint(CurrentStroke, input);
                         FinalizeStroke(CurrentStroke);
                         await context.AddDrawingObject(CurrentStroke);
+                        context.IsDrawing = false;
                         CurrentStroke = null;
                         context.ActiveObject = null;
                     }
@@ -230,6 +247,18 @@ namespace DeNote.Models.Drawing
         {
             return Settings.Clone();
         }
+
+        public void CancelDrawing(QIDrawingContext context)
+        {
+            // 현재 스트로크 취소
+            if (CurrentStroke != null)
+            {
+                context.ActiveObject = null;
+                CurrentStroke = null;
+                context.IsDrawing = false;
+                context.InvalidateVisual();
+            }
+        }
     }
 
 
@@ -265,6 +294,7 @@ namespace DeNote.Models.Drawing
                     EndPoint = StartPoint;
                     UpdateShapePath();
                     context.ActiveObject = CurrentShape;
+                    context.IsDrawing = true;
                     break;
 
                 case QIDrawingInputType.Move:
@@ -284,6 +314,7 @@ namespace DeNote.Models.Drawing
                         EndPoint = new SKPoint(input.X, input.Y);
                         UpdateShapePath();
                         await context.AddDrawingObject(CurrentShape);
+                        context.IsDrawing = false;
                         CurrentShape = null;
                         context.ActiveObject = null;
                     }
@@ -351,6 +382,18 @@ namespace DeNote.Models.Drawing
         {
             return Settings.Clone();
         }
+
+        public void CancelDrawing(QIDrawingContext context)
+        {
+            // 현재 스트로크 취소
+            if (CurrentShape != null)
+            {
+                context.ActiveObject = null;
+                CurrentShape = null;
+                context.IsDrawing = false;
+                context.InvalidateVisual();
+            }
+        }
     }
 
     public class QIEraserTool : IQIDrawingTool
@@ -397,6 +440,12 @@ namespace DeNote.Models.Drawing
         public QIDrawingToolSettings GetSettings()
         {
             return Settings.Clone();
+        }
+
+        public void CancelDrawing(QIDrawingContext context)
+        {
+            // 현재 지우기 작업 취소
+            context.CancelErasing();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -275,21 +276,38 @@ namespace DeNote.Views
             ToolbarPopup.IsOpen = false;
         }
 
+        private void CloseToolSettingsPopup()
+        {
+            ShapePickerPopup.IsOpen = false;
+            ThicknessPickerPopup.IsOpen = false;
+            ColorPickerPopup.IsOpen = false;
+        }
+
+        private void ClosePopup()
+        {
+            DrawingToolPickerPopup.IsOpen = false;
+            ShapePickerPopup.IsOpen = false;
+            ThicknessPickerPopup.IsOpen = false;
+            ColorPickerPopup.IsOpen = false;
+            ToolbarPopup.IsOpen = false;
+        }
 
         private void OnMenuRequested(object? sender, QIDrawingCanvasView.MenuRequestedEventArgs e)
         {
 
             var requestType = e.MenuRequestType;
 
+            Debug.WriteLine($"Toolbar Menu Request: {requestType}");
+
             if (requestType == QIDrawingCanvasView.MenuRequestType.Open)
             {
+                ClosePopup();
                 ToolbarPopup.IsOpen = true;
             }
             else if (requestType == QIDrawingCanvasView.MenuRequestType.Close)
             {
-                ToolbarPopup.IsOpen = false;
+                ClosePopup();
             }
-
         }
 
         public void Dispose()
@@ -300,6 +318,7 @@ namespace DeNote.Views
         private void DrawingToolPicker_SelectedToolChanged(object sender, RoutedPropertyChangedEventArgs<QIDrawingToolType> e)
         {
             if (_canvasView == null) return;
+            CloseToolSettingsPopup();
             _canvasView.ChangeTool(e.NewValue);
             UpdateToolButtonStates();
             UpdateColorPickerButtonState();
@@ -363,6 +382,11 @@ namespace DeNote.Views
                 settings.StrokeWidth = (float)newThickness;
                 _canvasView.UpdateToolSettings(settings);
             }
+        }
+
+        internal void OnDeactivated(object? sender, EventArgs e)
+        {
+            ClosePopup();
         }
     }
 }

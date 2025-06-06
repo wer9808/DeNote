@@ -103,6 +103,11 @@ namespace DeNote.Views
             DrawingCanvasMenu.Dispose();
         }
 
+        internal void OnDeactivated(object? sender, EventArgs e)
+        {
+            DrawingCanvasToolbar.OnDeactivated(sender, e);
+        }
+
         public event EventHandler? CloseRequested;
     }
 }
