@@ -12,6 +12,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\app_intro.mp4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\app_intro.mp4">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="Resources\icon_tools_circle_white.png" />
     <Resource Include="Resources\icon_tools_eraser_white.png" />
     <Resource Include="Resources\icon_tools_highlighter_white.png" />

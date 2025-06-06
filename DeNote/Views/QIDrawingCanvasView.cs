@@ -31,7 +31,7 @@ namespace DeNote.Views
     {
         private float defaultPressure = 1.0f; // 기본 압력 값
 
-        private BackgroundOption backgroundOption = BackgroundOption.Capture;
+        private BackgroundOption backgroundOption = BackgroundOption.SolidColor;
         private SKBitmap? _backgroundBitmap;
         private bool _isBackgroundCaptured = false;
         public bool IsBackgroundCaptured => _isBackgroundCaptured;
@@ -378,7 +378,7 @@ namespace DeNote.Views
             var points = e.GetStylusPoints(this);
             if (points.Count == 0) return;
 
-            if (drawingContext.IsDrawing)
+            if (drawingContext.IsDrawing || drawingContext.IsErasing)
             {
                 foreach (var point in points)
                 {
@@ -399,6 +399,7 @@ namespace DeNote.Views
 
         protected override async void OnStylusUp(StylusEventArgs e)
         {
+            if (!drawingContext.IsDrawing && !drawingContext.IsErasing) return;
             var points = e.GetStylusPoints(this);
 
             int i;

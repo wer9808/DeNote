@@ -15,7 +15,18 @@ namespace DeNote
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             _overlayWindow = new OverlayWindow();
-            _overlayWindow?.Show();
+
+            var splashWindow = new SplashWindow();
+
+            splashWindow.MediaEnded += (s, e) =>
+            {
+                Thread.Sleep(2000); // Optional delay for better UX
+                splashWindow.Close();
+                _overlayWindow.Show();
+                _overlayWindow.PositionWindow(); // Position the overlay window
+            };
+
+            splashWindow.Show();
         }
 
         private void Application_Exit(object sender, ExitEventArgs e)

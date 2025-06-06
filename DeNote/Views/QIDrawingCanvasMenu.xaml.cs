@@ -100,7 +100,7 @@ namespace DeNote.Views
             _canvasView.ToggleBackgroundOption();
         }
 
-        private async void SaveBtn_Click(object sender, RoutedEventArgs e)
+        private async void CaptureBtn_Click(object sender, RoutedEventArgs e)
         {
             if (_canvasView == null) return;
             await _canvasView.SaveCapture();
@@ -134,5 +134,6 @@ namespace DeNote.Views
         }
 
         public event EventHandler? CloseRequested;
+
     }
 }

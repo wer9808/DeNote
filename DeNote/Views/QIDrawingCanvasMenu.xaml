@@ -36,6 +36,7 @@
                     BorderBrush="Transparent"
                     Click="UndoBtn_Click"
                     CornerRadius="30"
+                    ToolTip="실행취소"
                     Foreground="#C0FFFFFF"
                     MouseOverBackground="Orange">
                     <TextBlock
@@ -58,6 +59,7 @@
                     BorderBrush="Transparent"
                     Click="RedoBtn_Click"
                     CornerRadius="30"
+                    ToolTip="다시실행"
                     Foreground="#C0FFFFFF"
                     MouseOverBackground="Orange">
                     <TextBlock
@@ -81,7 +83,8 @@
                     Click="ClearDrawingBtn_Click"
                     CornerRadius="30"
                     Foreground="#C0FFFFFF"
-                    MouseOverBackground="Orange">
+                    MouseOverBackground="Orange"
+                    ToolTip="초기화">
                     <TextBlock
                         Width="20"
                         Height="20"
@@ -104,7 +107,8 @@
                     Click="RecordBtn_Click"
                     CornerRadius="30"
                     Foreground="#C0FFFFFF"
-                    MouseOverBackground="Orange">
+                    MouseOverBackground="Orange"
+                    ToolTip="녹화하기">
                     <TextBlock
                         Width="20"
                         Height="20"
@@ -117,16 +121,17 @@
                     </Button.Effect>
                 </ui:Button>
                 <ui:Button
-                    x:Name="SaveBtn"
+                    x:Name="CaptureBtn"
                     Margin="10"
                     Padding="10"
                     HorizontalAlignment="Stretch"
                     Background="Transparent"
                     BorderBrush="Transparent"
-                    Click="SaveBtn_Click"
+                    Click="CaptureBtn_Click"
                     CornerRadius="30"
                     Foreground="#C0FFFFFF"
-                    MouseOverBackground="Orange">
+                    MouseOverBackground="Orange"
+                    ToolTip="캡처하기">
                     <TextBlock
                         Width="20"
                         Height="20"
@@ -148,7 +153,8 @@
                     Click="ToggleBackgroundBtn_Click"
                     CornerRadius="30"
                     Foreground="#C0FFFFFF"
-                    MouseOverBackground="Orange">
+                    MouseOverBackground="Orange"
+                    ToolTip="배경 전환">
                     <TextBlock
                         Width="20"
                         Height="20"
@@ -170,7 +176,8 @@
                     Click="SettingBtn_Click"
                     CornerRadius="30"
                     Foreground="#C0FFFFFF"
-                    MouseOverBackground="Orange">
+                    MouseOverBackground="Orange"
+                    ToolTip="설정">
                     <TextBlock
                         Width="20"
                         Height="20"
@@ -193,7 +200,8 @@
                     Click="CloseBtn_Click"
                     CornerRadius="30"
                     Foreground="#C0FFFFFF"
-                    MouseOverBackground="Orange">
+                    MouseOverBackground="Orange"
+                    ToolTip="최소화">
                     <TextBlock
                         Width="20"
                         Height="20"

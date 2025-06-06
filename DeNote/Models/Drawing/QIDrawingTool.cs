@@ -102,6 +102,7 @@ namespace DeNote.Models.Drawing
                         context.IsDrawing = false;
                         CurrentStroke = null;
                         context.ActiveObject = null;
+                        context.InvalidateVisual();
                     }
                     break;
             }
@@ -211,6 +212,7 @@ namespace DeNote.Models.Drawing
                         context.IsDrawing = false;
                         CurrentStroke = null;
                         context.ActiveObject = null;
+                        context.InvalidateVisual();
                     }
                     break;
             }
@@ -317,6 +319,7 @@ namespace DeNote.Models.Drawing
                         context.IsDrawing = false;
                         CurrentShape = null;
                         context.ActiveObject = null;
+                        context.InvalidateVisual();
                     }
                     break;
             }
