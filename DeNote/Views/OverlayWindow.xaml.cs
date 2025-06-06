@@ -59,8 +59,14 @@ namespace DeNote.Views
 
             this.Loaded += OverlayWindow_Loaded;
             this.Closing += OverlayWindow_Closing;
+            this.Deactivated += OverlayWindow_Deactivated;
 
             DrawingCanvasControl.CloseRequested += (s, e) => HideToTray();
+        }
+
+        private void OverlayWindow_Deactivated(object? sender, EventArgs e)
+        {
+            DrawingCanvasControl?.OnDeactivated(sender, e);
         }
 
         private void OverlayWindow_Loaded(object sender, RoutedEventArgs e)

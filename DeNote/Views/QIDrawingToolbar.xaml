@@ -18,7 +18,7 @@
             HorizontalOffset="-100"
             Placement="MousePoint"
             PopupAnimation="Fade"
-            StaysOpen="False"
+            StaysOpen="True"
             VerticalOffset="-100">
             <Grid Width="200" Height="200">
                 <Grid.ColumnDefinitions>
@@ -198,7 +198,7 @@
             Placement="Center"
             PlacementTarget="{Binding ElementName=ShapePickerBtn}"
             PopupAnimation="Fade"
-            StaysOpen="False"
+            StaysOpen="True"
             VerticalOffset="0">
             <Border
                 Margin="5"
@@ -337,7 +337,7 @@
             Placement="Center"
             PlacementTarget="{Binding ElementName=ThicknessBtn}"
             PopupAnimation="Fade"
-            StaysOpen="False"
+            StaysOpen="True"
             VerticalOffset="0">
             <controls:QIThicknessPicker x:Name="ThicknessPicker" ThicknessChanged="ThicknessPicker_ThicknessChanged" />
         </Popup>
@@ -348,7 +348,7 @@
             HorizontalOffset="0"
             Placement="Center"
             PlacementTarget="{Binding ElementName=ColorPickerBtn}"
-            StaysOpen="False"
+            StaysOpen="True"
             VerticalOffset="130">
             <controls:QIColorPicker x:Name="ColorPicker" SelectedColorChanged="ColorPicker_SelectedColorChanged" />
         </Popup>
@@ -359,7 +359,7 @@
             HorizontalOffset="0"
             Placement="Center"
             PlacementTarget="{Binding ElementName=DrawingToolPickerBtn}"
-            StaysOpen="False"
+            StaysOpen="True"
             VerticalOffset="-60">
 
             <controls:QIDrawingToolPicker x:Name="DrawingToolPicker" SelectedToolChanged="DrawingToolPicker_SelectedToolChanged" />

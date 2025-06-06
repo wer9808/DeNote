@@ -81,48 +81,6 @@ namespace DeNote.Views
             _backgroundBitmap?.Dispose();
         }
 
-        protected void OnPaintSurface(SKPaintSurfaceEventArgs e)
-        {
-            SKCanvas canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
-
-            float primaryScreenWidth = (float)SystemParameters.PrimaryScreenWidth;
-            float primaryScreenHeight = (float)SystemParameters.PrimaryScreenHeight;
-            SKRect destRect = new SKRect(0, 0, primaryScreenWidth, primaryScreenHeight);
-
-            if (backgroundOption == BackgroundOption.Capture)
-            {
-                // 배경 그리기 (배경이 있는 경우)
-                if (_backgroundBitmap != null)
-                {
-                    // SKBitmap을 캔버스 크기에 맞게 그리기
-                    canvas.DrawBitmap(_backgroundBitmap, destRect);
-                }
-            }
-            else
-            {
-                canvas.Clear(backgroundColor);
-            }
-
-            if (drawingContext.IsErasing)
-            {
-                canvas.DrawBitmap(drawingContext.EraserBitmap, destRect);
-                return;
-            }
-
-            // 완성된 객체 렌더링
-            foreach (var obj in drawingContext.OrderedObjects)
-            {
-                renderer.Render(canvas, obj);
-            }
-
-            // 활성 객체 렌더링 (생성/편집 중)
-            if (!IsGestureCapturing && drawingContext.ActiveObject != null)
-            {
-                drawingContext.ActiveObject.Render(canvas);
-            }
-        }
-
         private void OnPaintSurface(object? sender, SKPaintGLSurfaceEventArgs e)
         {
             SKCanvas canvas = e.Surface.Canvas;
@@ -159,7 +117,7 @@ namespace DeNote.Views
             }
 
             // 활성 객체 렌더링 (생성/편집 중)
-            if (drawingContext.ActiveObject != null)
+            if (drawingContext.IsDrawing && drawingContext.ActiveObject != null)
             {
                 drawingContext.ActiveObject.Render(canvas);
             }
@@ -280,8 +238,6 @@ namespace DeNote.Views
 
         private async Task StartDrawing(QIPoint point)
         {
-            MenuRequested.Invoke(this, new MenuRequestedEventArgs { MenuRequestType = MenuRequestType.Close });
-
             await toolManager.HandleInput(new QIDrawingInputData
             {
                 Type = QIDrawingInputType.Down,
@@ -289,8 +245,18 @@ namespace DeNote.Views
                 Y = (float)point.Y,
                 Pressure = point.Pressure  // 마우스는 필압 정보 없음
             });
+        }
 
-            drawingContext.IsDrawing = true;
+        protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
+        {
+            MenuRequested.Invoke(this, new MenuRequestedEventArgs { MenuRequestType = MenuRequestType.Close });
+            base.OnPreviewMouseDown(e);
+        }
+
+        protected override void OnPreviewStylusDown(StylusDownEventArgs e)
+        {
+            MenuRequested.Invoke(this, new MenuRequestedEventArgs { MenuRequestType = MenuRequestType.Close });
+            base.OnPreviewStylusDown(e);
         }
 
         // 마우스 이벤트도 처리
@@ -306,8 +272,9 @@ namespace DeNote.Views
                 Pressure = defaultPressure // 마우스는 필압 정보 없음
             };
 
-            await StartDrawing(startPosition);
             CaptureMouse();
+
+            await StartDrawing(startPosition);
             DrawStarted.Invoke(this, e);
 
             e.Handled = true;
@@ -319,7 +286,7 @@ namespace DeNote.Views
 
             var point = e.GetPosition(this);
 
-            if (drawingContext.IsDrawing)
+            if (drawingContext.IsDrawing || drawingContext.IsErasing)
             {
                 await toolManager.HandleInput(new QIDrawingInputData
                 {
@@ -336,7 +303,7 @@ namespace DeNote.Views
         protected override async void OnMouseLeftButtonUp(MouseButtonEventArgs e)
         {
             if (e.StylusDevice != null) return;
-            if (!drawingContext.IsDrawing) return;
+            if (!drawingContext.IsDrawing && !drawingContext.IsErasing) return;
 
             var point = e.GetPosition(this);
 
@@ -348,7 +315,6 @@ namespace DeNote.Views
                 Pressure = defaultPressure
             });
 
-            drawingContext.IsDrawing = false;
             DrawEnded.Invoke(this, e);
             e.Handled = true;
             ReleaseMouseCapture();
@@ -369,6 +335,7 @@ namespace DeNote.Views
 
         protected override async void OnStylusDown(StylusDownEventArgs e)
         {
+
             var points = e.GetStylusPoints(this);
 
             if (points.Count == 0)
@@ -379,14 +346,14 @@ namespace DeNote.Views
 
             Debug.WriteLine($"StylusDown : {point.X}, {point.Y}");
 
+            CaptureStylus();
+
             await StartDrawing(new QIPoint
             {
                 X = (float)point.X,
                 Y = (float)point.Y,
                 Pressure = point.PressureFactor
             });
-
-            CaptureStylus();
 
             for (i = 1; i < points.Count; i++)
             {
@@ -461,7 +428,6 @@ namespace DeNote.Views
             await toolManager.HandleInput(endInput);
 
             ReleaseStylusCapture();
-            drawingContext.IsDrawing = false;
             DrawEnded.Invoke(this, e);
             e.Handled = true;
         }
@@ -518,6 +484,9 @@ namespace DeNote.Views
             Debug.WriteLine($"Gesture captured: {e.Gesture}");
             if (e.Gesture == QIDrawingGesture.Hold)
             {
+                ReleaseMouseCapture();
+                ReleaseStylusCapture();
+                DrawEnded?.Invoke(this, EventArgs.Empty);
                 MenuRequested?.Invoke(this, new MenuRequestedEventArgs { MenuRequestType = MenuRequestType.Open });
             }
             IsGestureCapturing = false;

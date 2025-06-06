@@ -160,8 +160,8 @@ namespace DeNote.Services
             if (_isGestureCapturing)
             {
                 _isGestureCapturing = false;
-                GestureCapturingEnded?.Invoke(this, new GestureCapturedEventArgs(QIDrawingGesture.Hold));
                 CancelDrawing();
+                GestureCapturingEnded?.Invoke(this, new GestureCapturedEventArgs(QIDrawingGesture.Hold));
             }
         }
 
